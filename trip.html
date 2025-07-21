@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trip</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div id="headerContainer"></div>
+
+    <!-- Main content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <div class="flex">
+            <div class="flex-grow">
+                <p class="text-2xl font-semibold mb-4"><strong id="tripTitle"></strong> <span id="tripName"></span></p>
+
+                <div class="mb-6 text-gray-700">
+                    <p><strong id="labelStartDate"></strong> <span id="tripStart"></span></p>
+                    <p><strong id="labelEndDate"></strong> <span id="tripEnd"></span></p>
+                    <p><strong id="labelPeopleCount"></strong> <span id="tripPeopleCount"></span></p>
+                </div>
+            </div>
+            <div>
+                <button id="saveImage" onclick="captureReview()"
+                    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    📸 Lưu ảnh kết quả
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Xem chi tiet tung nguoi -->
+        <h3 class="text-xl font-semibold mb-2" id="reviewTitle">Tổng kết chi phí theo người</h3>
+        <div id="summaryCheck" class="mt-6 p-4 bg-gray-100 rounded text-sm font-medium"></div>
+        <div id="reviewContainer" class="grid gap-2 mb-6">
+            <!-- Các dòng kết quả sẽ được render ở đây -->
+        </div>
+
+        <!-- Thêm chi phí -->
+        <div class="mb-6">
+            <button id="addExpenseBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                ➕ Thêm chi phí
+            </button>
+
+            <div id="renderExpenseForm"></div>
+
+            <h3 class="text-xl font-semibold mb-2" id="expenseTitle">Danh sách chi phí</h3>
+            <table class="w-full bg-white shadow rounded mb-8">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="py-2 px-4 text-left" id="tableTitle">Tên chi phí</th>
+                        <th class="py-2 px-4 text-left" id="tablePayer">Người chi</th>
+                        <th class="py-2 px-4 text-left" id="tableAmount">Số tiền</th>
+                        <th class="py-2 px-4 text-left" id="tableSplit">Kiểu chia</th>
+                        <th class="py-2 px-4 text-left" id="tableParticipants">Người tham gia</th>
+                        <th class="py-2 px-4 text-left" id="action">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="expenseTableBody">
+                    <!-- Chi phí sẽ được render tại đây -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div id="footerContainer"></div>
+
+    <!-- Script files -->
+    <script src="loadHeaderFooter.js"></script>
+    <script src="expenseManager.js"></script>
+    <script src="lang.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</body>
+
+</html>
