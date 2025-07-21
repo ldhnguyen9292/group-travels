@@ -27,14 +27,14 @@
             <div>
                 <button id="saveImage" onclick="captureReview()"
                     class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    📸 Lưu ảnh kết quả
+
                 </button>
             </div>
         </div>
 
 
         <!-- Xem chi tiet tung nguoi -->
-        <h3 class="text-xl font-semibold mb-2" id="reviewTitle">Tổng kết chi phí theo người</h3>
+        <h3 class="text-xl font-semibold mb-2" id="reviewTitle"></h3>
         <div id="summaryCheck" class="mt-6 p-4 bg-gray-100 rounded text-sm font-medium"></div>
         <div id="reviewContainer" class="grid gap-2 mb-6">
             <!-- Các dòng kết quả sẽ được render ở đây -->
@@ -43,21 +43,21 @@
         <!-- Thêm chi phí -->
         <div class="mb-6">
             <button id="addExpenseBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                ➕ Thêm chi phí
+
             </button>
 
             <div id="renderExpenseForm"></div>
 
-            <h3 class="text-xl font-semibold mb-2" id="expenseTitle">Danh sách chi phí</h3>
+            <h3 class="text-xl font-semibold mb-2" id="expenseTitle"></h3>
             <table class="w-full bg-white shadow rounded mb-8">
                 <thead class="bg-gray-200">
                     <tr>
-                        <th class="py-2 px-4 text-left" id="tableTitle">Tên chi phí</th>
-                        <th class="py-2 px-4 text-left" id="tablePayer">Người chi</th>
-                        <th class="py-2 px-4 text-left" id="tableAmount">Số tiền</th>
-                        <th class="py-2 px-4 text-left" id="tableSplit">Kiểu chia</th>
-                        <th class="py-2 px-4 text-left" id="tableParticipants">Người tham gia</th>
-                        <th class="py-2 px-4 text-left" id="action">Hành động</th>
+                        <th class="py-2 px-4 text-left" id="tableTitle"></th>
+                        <th class="py-2 px-4 text-left" id="tablePayer"></th>
+                        <th class="py-2 px-4 text-left" id="tableAmount"></th>
+                        <th class="py-2 px-4 text-left" id="tableSplit"></th>
+                        <th class="py-2 px-4 text-left" id="tableParticipants"></th>
+                        <th class="py-2 px-4 text-left" id="action"></th>
                     </tr>
                 </thead>
                 <tbody id="expenseTableBody">

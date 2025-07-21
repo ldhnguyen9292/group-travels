@@ -56,7 +56,9 @@ function renderExpenses() {
     const tdSplit = document.createElement("td");
     tdSplit.className = "py-2 px-4";
     tdSplit.textContent =
-      expense.splitType === "equal" ? "Chia đều" : "Tính riêng";
+      expense.splitType === "equal"
+        ? translations[currentLang].splitEqually
+        : translations[currentLang].splitIndividually;
     tr.appendChild(tdSplit);
 
     // Người tham gia
@@ -231,28 +233,34 @@ function handleChangeExpense(event, type = "submit") {
 }
 
 function renderAddExpenseForm() {
+  currentLang = localStorage.getItem("language") || "vi";
+  const expenseNameText = currentLang === "en" ? "Expense name" : "Tên chi phí";
+  const amountText = currentLang === "en" ? "Amount" : "Số tiền";
+  const noteText =
+    currentLang === "en" ? "Note (optional)" : "Ghi chú (tùy chọn)";
+
   const formContainer = document.getElementById("renderExpenseForm");
   formContainer.className = "bg-white shadow rounded p-4 mb-6 hidden";
   formContainer.innerHTML = `
     <form id="expenseForm">
-      <h4 class="text-lg font-semibold mb-2">Thêm chi phí</h4>
+      <h4 id="addExpenseText" class="text-lg font-semibold mb-2"></h4>
       <div id="expenseId" class="hidden"></div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input id="expenseName" type="text" placeholder="Tên chi phí" class="border p-2 rounded" required>
+        <input id="expenseName" type="text" placeholder="${expenseNameText}" class="border p-2 rounded" required>
         <select id="expensePaidBy" class="border p-2 rounded" required>
           ${participants
             .map((p) => `<option value="${p}">${p}</option>`)
             .join("")}
         </select>
-        <input id="expenseAmount" type="number" step="0.01" placeholder="Số tiền" class="border p-2 rounded" required>
-        <input id="expenseNote" type="text" placeholder="Ghi chú (tùy chọn)" class="border p-2 rounded">
+        <input id="expenseAmount" type="number" step="0.01" placeholder="${amountText}" class="border p-2 rounded" required>
+        <input id="expenseNote" type="text" placeholder="${noteText}" class="border p-2 rounded">
       </div>
       <div class="mt-4">
-        <label class="mr-4"><input type="radio" name="splitType" value="equal" checked> Chia đều</label>
-        <label><input type="radio" name="splitType" value="custom"> Tính riêng</label>
+        <label class="mr-4"><input type="radio" name="splitType" value="equal" checked> <span id="splitEqually"></span></label>
+        <label><input type="radio" name="splitType" value="custom"> <span id="splitIndividually"></span></label>
       </div>
       <div class="mt-4" id="participantCheckboxes">
-        <p class="mb-2">Chọn người tham gia:</p>
+        <p id="selectParticipants" class="mb-2"></p>
         ${participants
           .map(
             (p) => `
@@ -347,24 +355,22 @@ function renderExpenseReview() {
 
   // Kiểm tra tổng
   const diff = totalExpense - totalCollected;
-  const totalExpenseText =
-    currentLang === "vi" ? "Tổng chi:" : "Total Expenses:";
-  const totalPaidText = currentLang === "vi" ? "Tổng thu:" : "Total Collected:";
-  const diffText = currentLang === "vi" ? "Chênh lệch" : "Difference";
-  const balanceMatched =
-    currentLang === "vi"
-      ? "🎯 Tổng thu và chi khớp nhau!"
-      : "🎯 Total collected matches total expenses!";
   const summaryHTML = `
-    <p>${totalExpenseText} <strong>${totalExpense.toLocaleString()}</strong></p>
-    <p>${totalPaidText} <strong>${totalCollected.toLocaleString()}</strong></p>
+    <p><span id="totalExpenseText">${
+      translations[currentLang].totalExpenseText
+    }</span> <strong>${totalExpense.toLocaleString()}</strong></p>
+    <p><span id="totalPaidText">${
+      translations[currentLang].totalPaidText
+    }</span> <strong>${totalCollected.toLocaleString()}</strong></p>
     <p class="${
       diff === 0 ? "text-green-600" : "text-red-600"
     } font-semibold mt-2">
       ${
         diff === 0
-          ? `${balanceMatched}`
-          : `⚠️ ${diffText}: ${diff.toLocaleString()}`
+          ? `<span id="balanceMatched">${translations[currentLang].balanceMatched}</span>`
+          : `⚠️ <span id="diffText">${
+              translations[currentLang].diffText
+            }</span>: ${diff.toLocaleString()}`
       }
     </p>
   `;

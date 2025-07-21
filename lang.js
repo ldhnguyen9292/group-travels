@@ -16,6 +16,7 @@ const translations = {
     saveTripBtn: "Save Trip",
     yourTripsTitle: "Your Trips",
     noTripMsg: "No trips created yet.",
+    appPreview: "App Preview",
     whatUsersSay: "What Users Say",
     quote1:
       "“Finally, an app that makes group travel planning easy! No more messy group chats.”",
@@ -44,6 +45,14 @@ const translations = {
     tableSplit: "Split Type",
     tableParticipants: "Participants",
     action: "Action",
+    totalExpenseText: "Total Expenses:",
+    totalPaidText: "Total Collected:",
+    diffText: "Difference",
+    balanceMatched: "🎯 Total collected matches total expenses!",
+    addExpenseText: "Add Expense",
+    selectParticipants: "Select participants:",
+    splitEqually: "Split equally",
+    splitIndividually: "Split individually",
   },
   vi: {
     tagline: "Ứng dụng lập kế hoạch du lịch nhóm hoàn hảo của bạn",
@@ -59,6 +68,7 @@ const translations = {
     saveTripBtn: "Lưu chuyến đi",
     yourTripsTitle: "Chuyến đi của bạn",
     noTripMsg: "Chưa có chuyến đi nào được tạo.",
+    appPreview: "Xem trước ứng dụng",
     whatUsersSay: "Người dùng nói gì",
     quote1:
       "“Cuối cùng cũng có ứng dụng giúp lập kế hoạch du lịch nhóm dễ dàng! Không còn nhóm chat lộn xộn nữa.”",
@@ -88,6 +98,14 @@ const translations = {
     tableSplit: "Kiểu chia",
     tableParticipants: "Người tham gia",
     action: "Hành động",
+    totalExpenseText: "Tổng chi:",
+    totalPaidText: "Tổng thu:",
+    diffText: "Chênh lệch",
+    balanceMatched: "🎯 Tổng thu và chi khớp nhau!",
+    addExpenseText: "Thêm chi phí",
+    selectParticipants: "Chọn người tham gia:",
+    splitEqually: "Chia đều",
+    splitIndividually: "Tính riêng",
   },
 };
 
