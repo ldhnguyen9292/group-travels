@@ -53,6 +53,12 @@ const translations = {
     selectParticipants: "Select participants:",
     splitEqually: "Split equally",
     splitIndividually: "Split individually",
+    totalOwedLabel: "Total Owed",
+    totalPaidLabel: "Paid",
+    balanceResultLabel: "Result",
+    receivedBack: "(receivable)",
+    needToPay: "(payable)",
+    balanced: "(balanced)",
   },
   vi: {
     tagline: "Ứng dụng lập kế hoạch du lịch nhóm hoàn hảo của bạn",
@@ -106,6 +112,12 @@ const translations = {
     selectParticipants: "Chọn người tham gia:",
     splitEqually: "Chia đều",
     splitIndividually: "Tính riêng",
+    totalOwedLabel: "Tổng cần trả",
+    totalPaidLabel: "Đã chi",
+    balanceResultLabel: "Kết quả",
+    receivedBack: "(thu lại)",
+    needToPay: "(phải trả)",
+    balanced: "(đã cân bằng)",
   },
 };
 

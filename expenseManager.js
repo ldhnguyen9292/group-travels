@@ -288,7 +288,7 @@ function renderExpenseReview() {
   const reviewContainer = document.getElementById("reviewContainer");
   reviewContainer.innerHTML = "";
 
-  const balanceMap = {}; // { name: { total: 0, details: [{name, amount}] } }
+  const balanceMap = {}; // { name: { total, paid, shouldPay, details: [] } }
 
   expenses.forEach((expense) => {
     const amount = parseFloat(expense.amount);
@@ -296,17 +296,29 @@ function renderExpenseReview() {
 
     // Người chi tiền
     if (!balanceMap[expense.paidBy]) {
-      balanceMap[expense.paidBy] = { total: 0, details: [] };
+      balanceMap[expense.paidBy] = {
+        total: 0,
+        paid: 0,
+        shouldPay: 0,
+        details: [],
+      };
     }
     balanceMap[expense.paidBy].total += amount;
+    balanceMap[expense.paidBy].paid += amount;
 
     // Những người tham gia
     for (const [person, value] of Object.entries(perPerson)) {
       const num = parseFloat(value);
       if (!balanceMap[person]) {
-        balanceMap[person] = { total: 0, details: [] };
+        balanceMap[person] = {
+          total: 0,
+          paid: 0,
+          shouldPay: 0,
+          details: [],
+        };
       }
       balanceMap[person].total -= num;
+      balanceMap[person].shouldPay += num;
       balanceMap[person].details.push({
         expenseName: expense.name,
         amount: num,
@@ -316,6 +328,7 @@ function renderExpenseReview() {
 
   let totalExpense = 0;
   let totalCollected = 0;
+
   for (const [name, data] of Object.entries(balanceMap)) {
     const div = document.createElement("div");
 
@@ -338,22 +351,35 @@ function renderExpenseReview() {
       .join("");
 
     div.innerHTML = `
-        <p class="font-semibold mb-1">${name}: <span class="font-bold">${data.total.toFixed(
-      2
-    )} đ</span> ${
-      data.total > 0 ? "(thu lại)" : data.total < 0 ? "(phải trả)" : ""
-    }</p>
-        <ul>${detailList}</ul>
-      `;
+      <p class="font-semibold mb-1">${name}:</p>
+      <ul class="mb-2">${detailList}</ul>
+      <p class="ml-2 text-sm">🧾 <strong>${
+        translations[currentLang].totalOwedLabel
+      }:</strong> ${data.shouldPay.toLocaleString()} đ</p>
+      <p class="ml-2 text-sm">💰 <strong>${
+        translations[currentLang].totalPaidLabel
+      }:</strong> ${data.paid.toLocaleString()} đ</p>
+      <p class="ml-2 text-sm">
+        <strong>${translations[currentLang].balanceResultLabel}:</strong> 
+        <span class="font-bold">
+          ${data.total.toFixed(2)} đ
+        </span>
+        ${
+          data.total > 0
+            ? `${translations[currentLang].receivedBack}`
+            : data.total < 0
+            ? `${translations[currentLang].needToPay}`
+            : `${translations[currentLang].balanced}`
+        }
+      </p>
+    `;
 
-    // Tổng cộng
-    totalExpense += data.total > 0 ? data.total : 0;
-    totalCollected += data.total < 0 ? -data.total : 0;
+    totalExpense += data.paid;
+    totalCollected += data.shouldPay;
 
     reviewContainer.appendChild(div);
   }
 
-  // Kiểm tra tổng
   const diff = totalExpense - totalCollected;
   const summaryHTML = `
     <p><span id="totalExpenseText">${
