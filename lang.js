@@ -62,6 +62,12 @@ const translations = {
     receivedBack: "(receivable)",
     needToPay: "(payable)",
     balanced: "(balanced)",
+    selectAllBtn: "Select All",
+    deselectAllBtn: "Deselect All",
+    formSave: "Save",
+    formEdit: "Edit",
+    formReset: "Reset",
+    formCancel: "Cancel",
   },
   vi: {
     tagline: "Ứng dụng lập kế hoạch du lịch nhóm hoàn hảo của bạn",
@@ -123,6 +129,12 @@ const translations = {
     receivedBack: "(thu lại)",
     needToPay: "(phải trả)",
     balanced: "(đã cân bằng)",
+    selectAllBtn: "Chọn tất cả",
+    deselectAllBtn: "Bỏ chọn tất cả",
+    formSave: "Lưu",
+    formEdit: "Sửa",
+    formReset: "Làm lại",
+    formCancel: "Huỷ",
   },
 };
 
