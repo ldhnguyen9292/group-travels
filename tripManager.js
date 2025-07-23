@@ -19,16 +19,13 @@ function loadTrips() {
 
   trips.forEach((trip, index) => {
     const li = document.createElement("li");
-    li.className =
-      "border border-gray-300 rounded-md p-4 shadow-sm flex justify-between items-center";
+    li.className = "border border-gray-300 rounded-md p-4 shadow-sm flex justify-between items-center";
 
     const tripInfo = document.createElement("div");
     tripInfo.innerHTML = `
         <h3 class="text-xl font-semibold">${trip.name}</h3>
         <p>${trip.startDate} - ${trip.endDate}</p>
-        <p>${translations[currentLang].participants} ${
-      trip.participants.split(",").length
-    }</p>
+        <p>${translations[currentLang].participants} ${trip.participants.split(",").length}</p>
       `;
     li.appendChild(tripInfo);
 
@@ -114,13 +111,11 @@ function addParticipant() {
   input.value = "";
 }
 
-document
-  .getElementById("participantInput")
-  .addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      addParticipant();
-    }
-  });
+document.getElementById("participantInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    addParticipant();
+  }
+});
 
 function renderParticipantList() {
   const list = document.getElementById("participantList");

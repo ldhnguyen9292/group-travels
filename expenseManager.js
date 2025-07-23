@@ -1,11 +1,8 @@
 // expenseManager.js
-
 const tripId = new URLSearchParams(window.location.search).get("id");
-const trip = JSON.parse(localStorage.getItem("groupTrips") || "[]").find(
-  (t) => {
-    return t.id === tripId;
-  }
-);
+const trip = JSON.parse(localStorage.getItem("groupTrips") || "[]").find((t) => {
+  return t.id === tripId;
+});
 
 if (!trip) {
   window.location.href = "/";
@@ -17,6 +14,7 @@ const expenses = JSON.parse(localStorage.getItem(expenseKey) || "[]");
 
 const expenseTableBody = document.getElementById("expenseTableBody");
 
+// Render
 function renderTripInfo() {
   if (!trip) return;
   document.getElementById("tripName").textContent = trip.name;
@@ -64,15 +62,20 @@ function renderExpenses() {
     // Người tham gia
     const tdParticipants = document.createElement("td");
     tdParticipants.className = "py-2 px-4";
+
+    const scrollableDiv = document.createElement("div");
+    scrollableDiv.className = "max-h-24 overflow-y-auto leading-snug";
+
+    // Thêm nội dung nếu perPerson hợp lệ
     if (expense.perPerson && typeof expense.perPerson === "object") {
       const lines = Object.entries(expense.perPerson).map(
-        ([name, amount]) =>
-          `<div>${name}: ${Number(amount).toLocaleString()} ₫</div>`
+        ([name, amount]) => `<div>${name}: ${Number(amount).toLocaleString()} ₫</div>`
       );
-      tdParticipants.innerHTML = lines.join("");
-    } else {
-      tdParticipants.textContent = "";
+      scrollableDiv.innerHTML = lines.join("");
     }
+
+    // Gắn div cuộn vào td và thêm td vào dòng
+    tdParticipants.appendChild(scrollableDiv);
     tr.appendChild(tdParticipants);
 
     // Hành động
@@ -82,15 +85,13 @@ function renderExpenses() {
     // Nút Edit
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
-    editBtn.className =
-      "bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded";
+    editBtn.className = "bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded";
     editBtn.addEventListener("click", () => handleEditExpense(expense.id));
 
     // Nút Remove
     const removeBtn = document.createElement("button");
     removeBtn.textContent = "🗑️";
-    removeBtn.className =
-      "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
+    removeBtn.className = "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
     removeBtn.addEventListener("click", () => handleRemoveExpense(expense.id));
 
     tdActions.appendChild(editBtn);
@@ -101,143 +102,11 @@ function renderExpenses() {
   });
 }
 
-function saveExpense(expense, type = "submit") {
-  if (type === "submit") {
-    expenses.push(expense);
-  } else {
-    const index = expenses.findIndex((e) => {
-      return e.id === expense.id;
-    });
-
-    if (index < 0) {
-      return;
-    }
-
-    expenses[index] = expense;
-  }
-  localStorage.setItem(expenseKey, JSON.stringify(expenses));
-}
-
-function handleEditExpense(id) {
-  document.getElementById("renderExpenseForm").className =
-    "bg-white shadow rounded p-4 mb-6";
-  document.getElementById("formSave").className =
-    "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded hidden";
-  document.getElementById("formEdit").className =
-    "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
-
-  const expense = expenses.find((e) => {
-    return e.id === id;
-  });
-
-  // Gán thông tin cơ bản
-  document.getElementById("expenseId").value = expense.id;
-  document.getElementById("expenseName").value = expense.name;
-  document.getElementById("expensePaidBy").value = expense.paidBy;
-  document.getElementById("expenseAmount").value = parseFloat(expense.amount);
-  document.getElementById("expenseNote").value = expense.note;
-
-  // Gán kiểu chia
-  document.querySelectorAll('input[name="splitType"]').forEach((radio) => {
-    radio.checked = radio.value === (expense.splitType || "equal");
-  });
-
-  // Reset tất cả checkbox và trường nhập chia riêng
-  const participantCheckboxes = document.querySelectorAll(
-    `input[name='expenseParticipants[]']`
-  );
-  const individualSplitFields = document.querySelectorAll(`individualAmount-`);
-
-  participantCheckboxes.forEach((checkbox) => {
-    const name = checkbox.value;
-    const isIncluded = expense.perPerson && name in expense.perPerson;
-    checkbox.checked = isIncluded;
-  });
-
-  individualSplitFields.forEach((input) => {
-    const name = input.getAttribute("data-name");
-    if (
-      expense.splitType === "custom" &&
-      expense.perPerson &&
-      name in expense.perPerson
-    ) {
-      input.value = expense.perPerson[name];
-      input.disabled = false;
-    } else {
-      input.value = "";
-      input.disabled = expense.splitType !== "custom";
-    }
-  });
-}
-
-function handleRemoveExpense(id) {
-  if (confirm(translations[currentLang].confirmDeleteExpense)) {
-    const index = expenses.findIndex((e) => {
-      return e.id === id;
-    });
-    expenses.splice(index, 1); // Xóa expense
-    localStorage.setItem(expenseKey, JSON.stringify(expenses));
-    renderExpenses(); // Cập nhật lại bảng
-    renderExpenseReview();
-  }
-}
-
-function handleChangeExpense(event, type = "submit") {
-  event.preventDefault();
-  const id = document.getElementById("expenseId").value;
-  const name = document.getElementById("expenseName").value;
-  const paidBy = document.getElementById("expensePaidBy").value;
-  const amount = parseFloat(document.getElementById("expenseAmount").value);
-  const note = document.getElementById("expenseNote").value || "";
-  const splitType = document.querySelector(
-    "input[name='splitType']:checked"
-  ).value;
-  const participants = Array.from(
-    document.querySelectorAll("input[name='expenseParticipants[]']:checked")
-  ).map((i) => i.value);
-
-  let perPerson = {};
-  if (splitType === "equal") {
-    const share = parseFloat((amount / participants.length).toFixed(2));
-    participants.forEach((p) => {
-      perPerson[p] = share;
-    });
-  } else {
-    participants.forEach((p) => {
-      const individual = parseFloat(
-        document.getElementById(`individualAmount-${p}`).value
-      );
-      if (!isNaN(individual)) {
-        perPerson[p] = individual;
-      }
-    });
-  }
-
-  const expense = {
-    id: id || Date.now().toString(),
-    tripId: tripId,
-    name,
-    paidBy,
-    amount,
-    note,
-    perPerson,
-    splitType,
-  };
-
-  saveExpense(expense, type);
-  renderExpenses();
-  renderExpenseReview();
-  document.getElementById("expenseForm").reset();
-  document.getElementById("renderExpenseForm").className =
-    "bg-white shadow rounded p-4 mb-6 hidden";
-}
-
 function renderAddExpenseForm() {
   currentLang = localStorage.getItem("language") || "vi";
   const expenseNameText = currentLang === "en" ? "Expense name" : "Tên chi phí";
   const amountText = currentLang === "en" ? "Amount" : "Số tiền";
-  const noteText =
-    currentLang === "en" ? "Note (optional)" : "Ghi chú (tùy chọn)";
+  const noteText = currentLang === "en" ? "Note (optional)" : "Ghi chú (tùy chọn)";
 
   const formContainer = document.getElementById("renderExpenseForm");
   formContainer.className = "bg-white shadow rounded p-4 mb-6 hidden";
@@ -248,9 +117,7 @@ function renderAddExpenseForm() {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input id="expenseName" type="text" placeholder="${expenseNameText}" class="border p-2 rounded" required>
         <select id="expensePaidBy" class="border p-2 rounded" required>
-          ${participants
-            .map((p) => `<option value="${p}">${p}</option>`)
-            .join("")}
+          ${participants.map((p) => `<option value="${p}">${p}</option>`).join("")}
         </select>
         <input id="expenseAmount" type="number" step="0.01" placeholder="${amountText}" class="border p-2 rounded" required>
         <input id="expenseNote" type="text" placeholder="${noteText}" class="border p-2 rounded">
@@ -342,12 +209,7 @@ function renderExpenseReview() {
     div.className = `p-3 rounded shadow ${bgColor}`;
 
     const detailList = data.details
-      .map(
-        (d) =>
-          `<li class="ml-4 list-disc">${
-            d.expenseName
-          }: <strong>${d.amount.toFixed(2)} đ</strong></li>`
-      )
+      .map((d) => `<li class="ml-4 list-disc">${d.expenseName}: <strong>${d.amount.toFixed(2)} đ</strong></li>`)
       .join("");
 
     div.innerHTML = `
@@ -388,15 +250,11 @@ function renderExpenseReview() {
     <p><span id="totalPaidText">${
       translations[currentLang].totalPaidText
     }</span> <strong>${totalCollected.toLocaleString()}</strong></p>
-    <p class="${
-      diff === 0 ? "text-green-600" : "text-red-600"
-    } font-semibold mt-2">
+    <p class="${diff === 0 ? "text-green-600" : "text-red-600"} font-semibold mt-2">
       ${
         diff === 0
           ? `<span id="balanceMatched">${translations[currentLang].balanceMatched}</span>`
-          : `⚠️ <span id="diffText">${
-              translations[currentLang].diffText
-            }</span>: ${diff.toLocaleString()}`
+          : `⚠️ <span id="diffText">${translations[currentLang].diffText}</span>: ${diff.toLocaleString()}`
       }
     </p>
   `;
@@ -404,11 +262,130 @@ function renderExpenseReview() {
   document.getElementById("summaryCheck").innerHTML = summaryHTML;
 }
 
+// Utils
+function saveExpense(expense, type = "submit") {
+  if (type === "submit") {
+    expenses.push(expense);
+  } else {
+    const index = expenses.findIndex((e) => {
+      return e.id === expense.id;
+    });
+
+    if (index < 0) {
+      return;
+    }
+
+    expenses[index] = expense;
+  }
+  localStorage.setItem(expenseKey, JSON.stringify(expenses));
+}
+
+function handleEditExpense(id) {
+  document.getElementById("renderExpenseForm").className = "bg-white shadow rounded p-4 mb-6";
+  document.getElementById("formSave").className =
+    "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded hidden";
+  document.getElementById("formEdit").className = "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
+
+  const expense = expenses.find((e) => {
+    return e.id === id;
+  });
+
+  // Gán thông tin cơ bản
+  document.getElementById("expenseId").value = expense.id;
+  document.getElementById("expenseName").value = expense.name;
+  document.getElementById("expensePaidBy").value = expense.paidBy;
+  document.getElementById("expenseAmount").value = parseFloat(expense.amount);
+  document.getElementById("expenseNote").value = expense.note;
+
+  // Gán kiểu chia
+  document.querySelectorAll('input[name="splitType"]').forEach((radio) => {
+    radio.checked = radio.value === (expense.splitType || "equal");
+  });
+
+  // Reset tất cả checkbox và trường nhập chia riêng
+  const participantCheckboxes = document.querySelectorAll(`input[name='expenseParticipants[]']`);
+  const individualSplitFields = document.querySelectorAll(`individualAmount-`);
+
+  participantCheckboxes.forEach((checkbox) => {
+    const name = checkbox.value;
+    const isIncluded = expense.perPerson && name in expense.perPerson;
+    checkbox.checked = isIncluded;
+  });
+
+  individualSplitFields.forEach((input) => {
+    const name = input.getAttribute("data-name");
+    if (expense.splitType === "custom" && expense.perPerson && name in expense.perPerson) {
+      input.value = expense.perPerson[name];
+      input.disabled = false;
+    } else {
+      input.value = "";
+      input.disabled = expense.splitType !== "custom";
+    }
+  });
+}
+
+function handleRemoveExpense(id) {
+  if (confirm(translations[currentLang].confirmDeleteExpense)) {
+    const index = expenses.findIndex((e) => {
+      return e.id === id;
+    });
+    expenses.splice(index, 1); // Xóa expense
+    localStorage.setItem(expenseKey, JSON.stringify(expenses));
+    renderExpenses(); // Cập nhật lại bảng
+    renderExpenseReview();
+  }
+}
+
+function handleChangeExpense(event, type = "submit") {
+  event.preventDefault();
+  const id = document.getElementById("expenseId").value;
+  const name = document.getElementById("expenseName").value;
+  const paidBy = document.getElementById("expensePaidBy").value;
+  const amount = parseFloat(document.getElementById("expenseAmount").value);
+  const note = document.getElementById("expenseNote").value || "";
+  const splitType = document.querySelector("input[name='splitType']:checked").value;
+  const participants = Array.from(document.querySelectorAll("input[name='expenseParticipants[]']:checked")).map(
+    (i) => i.value
+  );
+
+  let perPerson = {};
+  if (splitType === "equal") {
+    const share = parseFloat((amount / participants.length).toFixed(2));
+    participants.forEach((p) => {
+      perPerson[p] = share;
+    });
+  } else {
+    participants.forEach((p) => {
+      const individual = parseFloat(document.getElementById(`individualAmount-${p}`).value);
+      if (!isNaN(individual)) {
+        perPerson[p] = individual;
+      }
+    });
+  }
+
+  const expense = {
+    id: id || Date.now().toString(),
+    tripId: tripId,
+    name,
+    paidBy,
+    amount,
+    note,
+    perPerson,
+    splitType,
+  };
+
+  saveExpense(expense, type);
+  renderExpenses();
+  renderExpenseReview();
+  document.getElementById("expenseForm").reset();
+  document.getElementById("renderExpenseForm").className = "bg-white shadow rounded p-4 mb-6 hidden";
+}
+
 window.updateSplitFields = function () {
   const type = document.querySelector("input[name='splitType']:checked").value;
-  const selected = Array.from(
-    document.querySelectorAll("input[name='expenseParticipants[]']:checked")
-  ).map((i) => i.value);
+  const selected = Array.from(document.querySelectorAll("input[name='expenseParticipants[]']:checked")).map(
+    (i) => i.value
+  );
   const fields = document.getElementById("individualSplitFields");
   fields.innerHTML = "";
   if (type === "custom") {
@@ -432,25 +409,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.getElementById("addExpenseBtn").addEventListener("click", () => {
-  document.getElementById("renderExpenseForm").className =
-    "bg-white shadow rounded p-4 mb-6";
-  document.getElementById("formSave").className =
-    "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
+  document.getElementById("renderExpenseForm").className = "bg-white shadow rounded p-4 mb-6";
+  document.getElementById("formSave").className = "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
   document.getElementById("formEdit").className =
     "mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded hidden";
 });
-
-function captureReview() {
-  const allReviews = Array.from(
-    document.getElementById("reviewContainer").getElementsByTagName("div")
-  );
-
-  allReviews.forEach((review, index) => {
-    html2canvas(review).then((canvas) => {
-      const link = document.createElement("a");
-      link.download = `trip-${trip.name}-${index}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-    });
-  });
-}

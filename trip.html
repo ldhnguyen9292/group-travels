@@ -1,70 +1,101 @@
 <!DOCTYPE html>
 <html lang="vi">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trip</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-</head>
+  </head>
 
-<body class="bg-gray-50">
+  <body class="bg-gray-50">
     <!-- Header -->
     <div id="headerContainer"></div>
 
     <!-- Main content -->
     <main class="max-w-4xl mx-auto px-4 py-8">
-        <div class="flex">
-            <div class="flex-grow">
-                <p class="text-2xl font-semibold mb-4"><strong id="tripTitle"></strong> <span id="tripName"></span></p>
+      <div class="flex">
+        <div class="flex-grow">
+          <p class="text-2xl font-semibold mb-4"><strong id="tripTitle"></strong> <span id="tripName"></span></p>
 
-                <div class="mb-6 text-gray-700">
-                    <p><strong id="labelStartDate"></strong> <span id="tripStart"></span></p>
-                    <p><strong id="labelEndDate"></strong> <span id="tripEnd"></span></p>
-                    <p><strong id="labelPeopleCount"></strong> <span id="tripPeopleCount"></span></p>
-                </div>
-            </div>
-            <div>
-                <button id="saveImage" onclick="captureReview()"
-                    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          <div class="mb-6 text-gray-700">
+            <p><strong id="labelStartDate"></strong> <span id="tripStart"></span></p>
+            <p><strong id="labelEndDate"></strong> <span id="tripEnd"></span></p>
+            <p><strong id="labelPeopleCount"></strong> <span id="tripPeopleCount"></span></p>
+          </div>
+        </div>
+        <div>
+          <button
+            id="saveImage"
+            onclick="captureReview()"
+            class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          ></button>
+          <button
+            id="savePDF"
+            class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onclick="showQRModal()"
+          ></button>
+        </div>
+      </div>
 
-                </button>
-            </div>
+      <!-- Xem chi tiet tung nguoi -->
+      <h3 class="text-xl font-semibold mb-2" id="reviewTitle"></h3>
+      <div id="summaryCheck" class="mt-6 p-4 bg-gray-100 rounded text-sm font-medium mb-2"></div>
+      <div id="reviewContainer" class="grid gap-2 mb-6">
+        <!-- Các dòng kết quả sẽ được render ở đây -->
+      </div>
+
+      <!-- Thêm chi phí -->
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold mb-2" id="expenseTitle"></h3>
+        <!-- Wrapper cho scroll ngang -->
+        <div class="w-full overflow-x-auto mb-2">
+          <table class="min-w-[700px] w-full bg-white shadow rounded mb-8">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="py-2 px-4 text-left" id="tableTitle"></th>
+                <th class="py-2 px-4 text-left" id="tablePayer"></th>
+                <th class="py-2 px-4 text-left" id="tableAmount"></th>
+                <th class="py-2 px-4 text-left" id="tableSplit"></th>
+                <th class="py-2 px-4 text-left" id="tableParticipants"></th>
+                <th class="py-2 px-4 text-left" id="action"></th>
+              </tr>
+            </thead>
+            <tbody id="expenseTableBody">
+              <!-- Chi phí sẽ được render tại đây -->
+            </tbody>
+          </table>
         </div>
 
+        <button id="addExpenseBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"></button>
 
-        <!-- Xem chi tiet tung nguoi -->
-        <h3 class="text-xl font-semibold mb-2" id="reviewTitle"></h3>
-        <div id="summaryCheck" class="mt-6 p-4 bg-gray-100 rounded text-sm font-medium"></div>
-        <div id="reviewContainer" class="grid gap-2 mb-6">
-            <!-- Các dòng kết quả sẽ được render ở đây -->
+        <div id="renderExpenseForm"></div>
+      </div>
+
+      <!-- Modal xác nhận -->
+      <div
+        id="qrModal"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        "
+      >
+        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center">
+          <p id="qrModalMessage"></p>
+          <button id="showQRModal" onclick="chooseQRUpload()"></button>
+          <button id="hideQRModal" onclick="exportToPDFWithQR(null)"></button>
         </div>
+      </div>
 
-        <!-- Thêm chi phí -->
-        <div class="mb-6">
-            <button id="addExpenseBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-
-            </button>
-
-            <div id="renderExpenseForm"></div>
-
-            <h3 class="text-xl font-semibold mb-2" id="expenseTitle"></h3>
-            <table class="w-full bg-white shadow rounded mb-8">
-                <thead class="bg-gray-200">
-                    <tr>
-                        <th class="py-2 px-4 text-left" id="tableTitle"></th>
-                        <th class="py-2 px-4 text-left" id="tablePayer"></th>
-                        <th class="py-2 px-4 text-left" id="tableAmount"></th>
-                        <th class="py-2 px-4 text-left" id="tableSplit"></th>
-                        <th class="py-2 px-4 text-left" id="tableParticipants"></th>
-                        <th class="py-2 px-4 text-left" id="action"></th>
-                    </tr>
-                </thead>
-                <tbody id="expenseTableBody">
-                    <!-- Chi phí sẽ được render tại đây -->
-                </tbody>
-            </table>
-        </div>
+      <!-- Input upload ảnh (ẩn) -->
+      <input type="file" id="qrUpload" accept="image/*" style="display: none" />
     </main>
 
     <!-- Footer -->
@@ -74,7 +105,8 @@
     <script src="loadHeaderFooter.js"></script>
     <script src="expenseManager.js"></script>
     <script src="lang.js"></script>
+    <script src="exportManager.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-</body>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  </body>
 </html>
