@@ -80,7 +80,7 @@ function renderExpenses() {
 
     // Hành động
     const tdActions = document.createElement("td");
-    tdActions.className = "py-2 px-4 flex gap-2";
+    tdActions.className = "py-2 px-4 h-24 text-center flex justify-center items-center gap-2";
 
     // Nút Edit
     const editBtn = document.createElement("button");
@@ -128,6 +128,14 @@ function renderAddExpenseForm() {
       </div>
       <div class="mt-4" id="participantCheckboxes">
         <p id="selectParticipants" class="mb-2"></p>
+        <div class="flex gap-2 mb-2">
+          <button type="button" onclick="selectAllParticipants()" class="px-2 py-1 bg-blue-500 text-white rounded text-sm">
+            Chọn tất cả
+          </button>
+          <button type="button" onclick="deselectAllParticipants()" class="px-2 py-1 bg-gray-400 text-white rounded text-sm">
+            Bỏ chọn tất cả
+          </button>
+        </div>
         ${participants
           .map(
             (p) => `
@@ -140,6 +148,8 @@ function renderAddExpenseForm() {
       <div class="mt-4" id="individualSplitFields"></div>
       <button id="formSave" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded hidden">Thêm</button>
       <button id="formEdit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded hidden">Sửa</button>
+      <button type="reset" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Làm lại</button>
+      <button type="button" onclick="cancelExpenseForm()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Huỷ</button>
     </form>
     `;
   document.querySelector("main").appendChild(formContainer);
@@ -378,6 +388,25 @@ function handleChangeExpense(event, type = "submit") {
   renderExpenses();
   renderExpenseReview();
   document.getElementById("expenseForm").reset();
+  document.getElementById("renderExpenseForm").className = "bg-white shadow rounded p-4 mb-6 hidden";
+}
+
+function selectAllParticipants() {
+  const checkboxes = document.querySelectorAll('input[name="expenseParticipants[]"]');
+  checkboxes.forEach((cb) => (cb.checked = true));
+  updateSplitFields();
+}
+
+function deselectAllParticipants() {
+  const checkboxes = document.querySelectorAll('input[name="expenseParticipants[]"]');
+  checkboxes.forEach((cb) => (cb.checked = false));
+  updateSplitFields();
+}
+
+function cancelExpenseForm() {
+  document.getElementById("expenseForm").reset();
+  document.getElementById("individualSplitFields").innerHTML = "";
+  document.querySelectorAll('input[name="expenseParticipants[]"]').forEach((cb) => (cb.checked = false));
   document.getElementById("renderExpenseForm").className = "bg-white shadow rounded p-4 mb-6 hidden";
 }
 
