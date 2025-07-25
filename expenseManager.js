@@ -322,7 +322,6 @@ function handleEditExpense(id) {
 
   // Reset tất cả checkbox và trường nhập chia riêng
   const participantCheckboxes = document.querySelectorAll(`input[name='expenseParticipants[]']`);
-  const individualSplitFields = document.querySelectorAll(`individualAmount-`);
 
   participantCheckboxes.forEach((checkbox) => {
     const name = checkbox.value;
@@ -330,16 +329,21 @@ function handleEditExpense(id) {
     checkbox.checked = isIncluded;
   });
 
-  individualSplitFields.forEach((input) => {
-    const name = input.getAttribute("data-name");
-    if (expense.splitType === "custom" && expense.perPerson && name in expense.perPerson) {
-      input.value = expense.perPerson[name];
-      input.disabled = false;
-    } else {
-      input.value = "";
-      input.disabled = expense.splitType !== "custom";
-    }
-  });
+  const fields = document.getElementById("individualSplitFields");
+  fields.innerHTML = "";
+  if (expense.splitType === "custom") {
+    // Hiển thị các trường nhập số tiền riêng
+    Object.entries(expense.perPerson || {}).forEach(([name, amount]) => {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "0.01";
+      input.id = `individualAmount-${name}`;
+      input.placeholder = `Số tiền cho ${name}`;
+      input.className = "block mt-2 border p-2 rounded w-full md:w-1/2";
+      input.value = parseFloat(amount).toFixed(2);
+      fields.appendChild(input);
+    });
+  }
 }
 
 function handleRemoveExpense(id) {
