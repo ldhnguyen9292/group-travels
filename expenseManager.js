@@ -32,6 +32,12 @@ function renderExpenses() {
   expenses.forEach((expense) => {
     const tr = document.createElement("tr");
 
+    // STT chi phí
+    const tdIndex = document.createElement("td");
+    tdIndex.className = "py-2 px-4 text-center";
+    tdIndex.textContent = expenses.indexOf(expense) + 1;
+    tr.appendChild(tdIndex);
+
     // Tên chi phí
     const tdTitle = document.createElement("td");
     tdTitle.className = "py-2 px-4";
@@ -100,6 +106,11 @@ function renderExpenses() {
 
     tbody.appendChild(tr);
   });
+
+  // Cập nhật tong chi phí
+  const totalExpense = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
+  document.getElementById("totalExpense").textContent = totalExpense.toLocaleString() + " ₫";
+  document.getElementById("totalExpenseText").textContent = translations[currentLang].totalExpenseText;
 }
 
 function renderAddExpenseForm() {
@@ -213,8 +224,10 @@ function renderExpenseReview() {
 
   let totalExpense = 0;
   let totalCollected = 0;
+  let index = 0;
 
   for (const [name, data] of Object.entries(balanceMap)) {
+    index++;
     const div = document.createElement("div");
 
     const bgColor =
@@ -231,7 +244,7 @@ function renderExpenseReview() {
       .join("");
 
     div.innerHTML = `
-      <p class="font-semibold mb-1">${name}:</p>
+      <p class="font-semibold mb-1">${index}. ${name}:</p>
       <ul class="mb-2">${detailList}</ul>
       <p class="ml-2 text-sm">🧾 <strong>${
         translations[currentLang].totalOwedLabel

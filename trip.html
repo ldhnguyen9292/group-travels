@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trip</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  </head>
+    <style>
+      * {
+        line-height: 1.4;
+      }
+    </style>
 
   <body class="bg-gray-50">
     <!-- Header -->
@@ -52,17 +56,24 @@
           <table class="min-w-[700px] w-full bg-white shadow rounded mb-8">
             <thead class="bg-gray-200">
               <tr>
-                <th class="py-2 px-4 text-left" id="tableTitle"></th>
-                <th class="py-2 px-4 text-left" id="tablePayer"></th>
-                <th class="py-2 px-4 text-left" id="tableAmount"></th>
-                <th class="py-2 px-4 text-left" id="tableSplit"></th>
-                <th class="py-2 px-4 text-left" id="tableParticipants"></th>
-                <th class="py-2 px-4 text-left" id="action"></th>
+                <th class="py-2 px-2 text-left" id="tableIndex"></th>
+                <th class="py-2 px-2 text-left" id="tableTitle"></th>
+                <th class="py-2 px-2 text-left" id="tablePayer"></th>
+                <th class="py-2 px-2 text-left" id="tableAmount"></th>
+                <th class="py-2 px-2 text-left" id="tableSplit"></th>
+                <th class="py-2 px-2 text-left" id="tableParticipants"></th>
+                <th class="py-2 px-2 text-left" id="action"></th>
               </tr>
             </thead>
             <tbody id="expenseTableBody">
               <!-- Chi phí sẽ được render tại đây -->
             </tbody>
+            <tfoot>
+              <tr>
+                <td id="totalExpenseText" colspan="3" class="py-2 px-4 text-right font-semibold">Tổng cộng:</td>
+                <td class="py-2 px-2" id="totalExpense"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 

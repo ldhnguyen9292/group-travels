@@ -68,6 +68,7 @@ const translations = {
     formEdit: "Edit",
     formReset: "Reset",
     formCancel: "Cancel",
+    totalExpenseText: "Total Expenses:",
   },
   vi: {
     tagline: "Ứng dụng lập kế hoạch du lịch nhóm hoàn hảo của bạn",
@@ -135,6 +136,7 @@ const translations = {
     formEdit: "Sửa",
     formReset: "Làm lại",
     formCancel: "Huỷ",
+    totalExpenseText: "Tổng chi phí:",
   },
 };
 
