@@ -74,7 +74,7 @@ const Home: React.FC = () => {
 
   return (
     <main className="min-h-[60vh] py-8">
-      <section className="max-w-3xl mx-auto bg-[#1e293b] rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100 p-6">
+      <section className="max-w-3xl mx-auto bg-[#1e293b] rounded-2xl shadow-lg border border-[#334155] text-gray-100 p-6">
         <h2 className="text-3xl font-semibold mb-4 text-center text-[#a5b4fc]">{t.trips}</h2>
         {loading && <Loading />}
         {!loading && (
