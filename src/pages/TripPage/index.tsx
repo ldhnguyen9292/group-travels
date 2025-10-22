@@ -37,6 +37,7 @@ const translations = {
     expensesDesc:
       'Expense UI will be migrated next. Existing app stores per-trip expenses in localStorage under key "expenses{id}".',
     expenseWarning: 'Warning: Expenses exceed contributions!',
+    ParticipantDetail: 'Participant Detail',
   },
   vn: {
     notFound: 'Không tìm thấy chuyến đi.',
@@ -65,6 +66,7 @@ const translations = {
     expensesDesc:
       'Giao diện chi tiêu sẽ được cập nhật trong bản tiếp theo. Hiện tại, ứng dụng lưu chi tiêu của từng chuyến đi trong localStorage với khóa "expenses{id}".',
     expenseWarning: 'Cảnh báo: Chi tiêu vượt quá tổng đóng góp!',
+    ParticipantDetail: 'Chi tiết thành viên',
   },
 };
 
@@ -175,6 +177,7 @@ const TripPage: React.FC = () => {
     <main className="min-h-[60vh] bg-gray-50 py-8">
       <section className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
         <TripInfoSection
+          tripId={trip.id}
           tripName={trip.name}
           startDate={trip.startDate}
           endDate={trip.endDate}

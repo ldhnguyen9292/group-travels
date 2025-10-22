@@ -5,6 +5,8 @@ import About from './pages/About';
 import Help from './pages/Help';
 import Home from './pages/Home';
 import TripPage from './pages/TripPage';
+import ParticipantsPage from './pages/TripPage/Participants';
+import ParticipantDetail from './pages/TripPage/Participants/ParticipantDetail';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/help" element={<Help />} />
             <Route path="/trip/:id" element={<TripPage />} />
+            <Route path="/trip/:id/participants" element={<ParticipantsPage />} />
+            <Route path="/trip/:id/participants/:participantId" element={<ParticipantDetail />} />
           </Routes>
         </div>
         <Footer />

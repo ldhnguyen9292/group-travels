@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Participant } from '../../types/trip';
 
 interface Props {
+  tripId: string;
   tripName: string;
   startDate?: string;
   endDate?: string;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 const TripInfoSection: React.FC<Props> = ({
+  tripId,
   tripName,
   startDate,
   endDate,
@@ -29,9 +31,15 @@ const TripInfoSection: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-center text-sm text-gray-500 mb-4">
+      <div className="flex justify-center text-sm text-gray-500 mb-4 gap-2">
         <button onClick={() => navigate('/')} className="px-4 py-2 rounded bg-black text-white hover:bg-gray-700">
           {t.back}
+        </button>
+        <button
+          onClick={() => navigate(`/trip/${tripId}/participants`)}
+          className="px-4 py-2 rounded bg-black text-white hover:bg-gray-700"
+        >
+          {t.ParticipantDetail}
         </button>
       </div>
       <h2 className="text-2xl font-semibold mb-2 text-center">{tripName}</h2>
