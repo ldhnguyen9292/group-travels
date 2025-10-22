@@ -77,9 +77,8 @@ const Home: React.FC = () => {
       <section className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-semibold mb-4 text-center">{t.trips}</h2>
         {loading && <Loading />}
-        {!loading && !trips.length && (
+        {!loading && (
           <>
-            <div className="text-center text-gray-500 mb-4">{t.noTrips}</div>
             {!showForm && (
               <div className="flex justify-center mb-6">
                 <button
@@ -101,6 +100,7 @@ const Home: React.FC = () => {
             />
           </div>
         )}
+        {!loading && trips.length === 0 && !showForm && <p>{t.noTrips}</p>}
         {!loading && trips.length > 0 && (
           <>
             <TripList trips={paginatedTrips} onDelete={deleteTrip} onEdit={handleEdit} />

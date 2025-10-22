@@ -25,6 +25,8 @@ const translations = {
     enterAmount: 'Enter amount',
     editExpense: 'Edit Expense',
     markAsContribution: 'Mark as contribution for payer',
+    selectAll: 'Select all',
+    deselectAll: 'Deselect all',
   },
   vn: {
     description: 'Mô tả',
@@ -41,6 +43,8 @@ const translations = {
     enterAmount: 'Nhập số tiền',
     editExpense: 'Sửa khoản chi',
     markAsContribution: 'Ghi nhận khoản này là đóng góp của người thanh toán',
+    selectAll: 'Chọn tất cả',
+    deselectAll: 'Bỏ chọn tất cả',
   },
 };
 
@@ -154,7 +158,6 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
           <option value="custom">{t.custom}</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium mb-1">{t.description}</label>
         <input
@@ -202,6 +205,24 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
       )}
       <div>
         <label className="block text-sm font-medium mb-1">{t.attendees}</label>
+        <div className="flex gap-2 mb-2">
+          <button
+            type="button"
+            className="px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 text-xs"
+            onClick={() => setAttendees(participants.map((p) => p.id))}
+            disabled={attendees.length === participants.length}
+          >
+            {t.selectAll || 'Select all'}
+          </button>
+          <button
+            type="button"
+            className="px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs"
+            onClick={() => setAttendees([])}
+            disabled={attendees.length === 0}
+          >
+            {t.deselectAll || 'Deselect all'}
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2">
           {participants.map((p) => (
             <label key={p.id} className="flex items-center gap-1">
