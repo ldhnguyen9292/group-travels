@@ -24,10 +24,10 @@ const ContributionList: React.FC<ContributionListProps> = ({
           <div className="flex justify-between items-center">
             <div className="grow">
               <div className="font-semibold">{c.participant.name}</div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-400">
                 {t.amount}: {c.amount}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-400">
                 {t.date}: {new Date(c.date).toLocaleDateString()}
               </div>
             </div>

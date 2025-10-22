@@ -73,9 +73,9 @@ const Home: React.FC = () => {
   };
 
   return (
-    <main className="min-h-[60vh] bg-gray-50 py-8">
-      <section className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-center">{t.trips}</h2>
+    <main className="min-h-[60vh] py-8">
+      <section className="max-w-3xl mx-auto bg-[#1e293b] rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100 p-6">
+        <h2 className="text-3xl font-semibold mb-4 text-center text-[#a5b4fc]">{t.trips}</h2>
         {loading && <Loading />}
         {!loading && (
           <>
@@ -106,17 +106,17 @@ const Home: React.FC = () => {
             <TripList trips={paginatedTrips} onDelete={deleteTrip} onEdit={handleEdit} />
             <div className="flex justify-center items-center gap-2 mt-4">
               <button
-                className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50"
+                className="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 font-semibold mb-2 text-white"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
                 {t.prev}
               </button>
-              <span className="mx-2">
+              <span className="mx-2 font-semibold mb-2 text-[#c7d2fe]">
                 {t.page} {page} {t.of} {totalPages}
               </span>
               <button
-                className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50"
+                className="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 font-semibold mb-2 text-white"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >

@@ -11,7 +11,7 @@ import ParticipantDetail from './pages/TripPage/Participants/ParticipantDetail';
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
         <Header />
         <div className="flex-1 container mx-auto px-4 py-6">
           <Routes>

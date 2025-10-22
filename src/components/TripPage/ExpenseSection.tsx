@@ -35,7 +35,7 @@ const ExpenseSection: React.FC<ExpenseFormProps> = ({
 }) => {
   return (
     <section className="mt-6">
-      <h3 className="text-lg font-semibold mb-2">{t.expensesDetails}</h3>
+      <h3 className="text-2xl font-semibold mb-2 text-[#a5b4fc]">{t.expensesDetails}</h3>
       <Modal
         open={isFormVisible}
         onClose={() => {

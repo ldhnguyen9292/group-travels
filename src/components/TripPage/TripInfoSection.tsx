@@ -42,8 +42,8 @@ const TripInfoSection: React.FC<Props> = ({
           {t.ParticipantDetail}
         </button>
       </div>
-      <h2 className="text-2xl font-semibold mb-2 text-center">{tripName}</h2>
-      <div className="text-gray-600 mb-2 text-center">
+      <h2 className="text-3xl font-semibold mb-4 text-center text-[#a5b4fc]">{tripName}</h2>
+      <div className="mb-2 text-center">
         {startDate} {endDate ? `— ${endDate}` : ''}
       </div>
       <div className="mb-2 text-center">

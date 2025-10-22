@@ -30,7 +30,6 @@ const Help: React.FC = () => {
   const [lang, setLang] = React.useState(localStorage.getItem('lang') || 'en');
 
   useEffect(() => {
-    // Ensure device ID is set
     getOrCreateDeviceId();
     const handler = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -42,25 +41,32 @@ const Help: React.FC = () => {
   }, []);
 
   const t = translations[lang as 'en' | 'vn'] || translations.en;
+
   return (
-    <main className="min-h-[60vh] bg-gray-50 py-8">
-      <section className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-center">{t.title}</h2>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">{t.createTripQ}</h3>
-          <p className="text-gray-700">{t.createTripA}</p>
-        </div>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">{t.dataQ}</h3>
-          <p className="text-gray-700">{t.dataA}</p>
-        </div>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">{t.langQ}</h3>
-          <p className="text-gray-700">{t.langA}</p>
-        </div>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">{t.moreQ}</h3>
-          <p className="text-gray-700">{t.moreA}</p>
+    <main className="min-h-[70vh] bg-[#0f172a] py-12 px-4">
+      <section className="max-w-3xl mx-auto bg-[#1e293b] rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100">
+        <h2 className="text-3xl font-semibold mb-8 text-center text-[#a5b4fc]">{t.title}</h2>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2 text-[#c7d2fe]">{t.createTripQ}</h3>
+            <p className="text-gray-300 leading-relaxed">{t.createTripA}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2 text-[#c7d2fe]">{t.dataQ}</h3>
+            <p className="text-gray-300 leading-relaxed">{t.dataA}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2 text-[#c7d2fe]">{t.langQ}</h3>
+            <p className="text-gray-300 leading-relaxed">{t.langA}</p>
+          </div>
+
+          <div className="border-t border-[#334155] pt-6">
+            <h3 className="text-lg font-semibold mb-2 text-[#c7d2fe]">{t.moreQ}</h3>
+            <p className="text-gray-300 leading-relaxed">{t.moreA}</p>
+          </div>
         </div>
       </section>
     </main>

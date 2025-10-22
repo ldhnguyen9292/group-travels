@@ -32,7 +32,7 @@ const ContributionSection: React.FC<Props> = ({
   contributionToEdit,
 }) => (
   <section className="mt-6">
-    <h3 className="text-lg font-semibold mb-2">{t.contributions}</h3>
+    <h3 className="text-2xl font-semibold mb-2 text-[#a5b4fc]">{t.contributions}</h3>
     <Modal
       open={showForm}
       onClose={() => {

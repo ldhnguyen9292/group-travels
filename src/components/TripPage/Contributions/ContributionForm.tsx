@@ -76,7 +76,7 @@ const ContributionForm: React.FC<Props> = ({ participants, onAdd, onEdit, contri
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 dark:bg-gray-800 m-0 p-8 rounded-md">
       <div>
         <label className="block text-sm font-medium mb-1">{t.participant}</label>
         <select

@@ -54,16 +54,16 @@ const TripList: React.FC<{ trips: Trip[]; onEdit: (trip: Trip) => void; onDelete
               to={`/trip/${tItem.id}`}
               style={{ display: 'flex', alignItems: 'center', flex: 1, textDecoration: 'none', color: 'inherit' }}
             >
-              <div style={{ flex: 1 }}>
-                <strong>{tItem.name}</strong>
-                <div style={{ fontSize: 13, color: '#555' }}>
+              <div style={{ flex: 1 }} className="text-gray-300 leading-relaxed">
+                <strong className="text-2xl font-semibold mb-2 text-[#c7d2fe]">{tItem.name}</strong>
+                <div>
                   {tItem.startDate && `${tItem.startDate}`} {tItem.endDate ? `— ${tItem.endDate}` : ''}
                 </div>
                 {/* Show total participants */}
-                <div style={{ fontSize: 13, color: '#666' }}>
+                <div>
                   {t.totalParticipants} {tItem.participants.length}
                 </div>
-                <div style={{ fontSize: 13, color: '#666' }}>{tItem.participants.map((p) => p.name).join(', ')}</div>
+                <div>{tItem.participants.map((p) => p.name).join(', ')}</div>
               </div>
             </Link>
             <div style={{ display: 'flex', gap: 8 }}>

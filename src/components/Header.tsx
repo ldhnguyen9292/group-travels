@@ -41,10 +41,11 @@ const translations = {
 };
 
 type Translation = (typeof translations)['en'];
+
 const Logo: React.FC<{ t: Translation }> = ({ t }) => (
   <span className="inline-flex items-center gap-2">
     <img src="/group-travel-logo.svg" alt="Group Travel Logo" className="w-10 h-10" />
-    <span className="text-lg font-semibold text-gray-900">{t.groupTravel}</span>
+    <span className="text-lg font-semibold text-gray-100">{t.groupTravel}</span>
   </span>
 );
 
@@ -57,8 +58,8 @@ const NAV = [
 const Header: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lang, setLang] = useState<string>(() => localStorage.getItem('lang') || 'en');
-
   const [accountOpen, setAccountOpen] = useState(false);
+
   const mobileRef = useRef<HTMLDivElement | null>(null);
   const accountRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,7 +73,6 @@ const Header: React.FC = () => {
     setAccountOpen(false);
   }, []);
 
-  // close on outside click
   useEffect(() => {
     function onDown(e: MouseEvent) {
       const target = e.target as Node;
@@ -91,8 +91,9 @@ const Header: React.FC = () => {
   }, [mobileOpen, accountOpen, closeMenus]);
 
   const t = translations[lang as 'en' | 'vn'] || translations.en;
+
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-[#0d1117] border-b border-gray-800">
       <div className="container mx-auto px-4 py-3 flex items-center gap-4">
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <Logo t={t} />
@@ -104,7 +105,9 @@ const Header: React.FC = () => {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `text-sm font-medium px-2 py-1 rounded ${isActive ? 'text-indigo-600' : 'text-gray-700'} hover:text-indigo-600`
+                `text-sm font-medium px-2 py-1 rounded transition-colors ${
+                  isActive ? 'text-[#8f87ff]' : 'text-gray-300'
+                } hover:text-[#8f87ff]`
               }
             >
               {t[item.key as keyof typeof t]}
@@ -121,7 +124,7 @@ const Header: React.FC = () => {
               id="lang"
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              className="h-8 text-sm rounded border border-gray-200 bg-white text-gray-700 px-2"
+              className="h-8 text-sm rounded border border-gray-700 bg-[#121826] text-gray-200 px-2 focus:outline-none focus:ring-1 focus:ring-[#6c63ff]"
               aria-label={t.language}
             >
               <option value="en">{t.english}</option>
@@ -133,25 +136,25 @@ const Header: React.FC = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white">
+        <div ref={mobileRef} className="md:hidden border-t border-gray-800 bg-[#0d1117]">
           <div className="px-4 py-3 space-y-2">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-300 hover:text-[#8f87ff]"
               >
                 {t[item.key as keyof typeof t]}
               </NavLink>
             ))}
 
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-gray-800">
               <div className="flex items-center gap-2 mt-2">
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value)}
-                  className="h-8 rounded border border-gray-200 bg-white text-sm text-gray-700 px-2"
+                  className="h-8 rounded border border-gray-700 bg-[#121826] text-sm text-gray-200 px-2 focus:outline-none focus:ring-1 focus:ring-[#6c63ff]"
                 >
                   <option value="en">{t.english}</option>
                   <option value="vn">{t.vietnamese}</option>

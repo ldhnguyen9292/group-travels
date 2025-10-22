@@ -47,9 +47,9 @@ const translations = {
     totalContributions: 'Tổng số đóng góp:',
     totalExpenses: 'Tổng chi tiêu:',
     addExpense: 'Thêm khoản chi mới',
-    addContribution: 'Thêm khoản đóng góp',
+    addContribution: 'Thêm tiền ứng trước',
     cancel: 'Hủy',
-    contributions: 'Khoản đóng góp',
+    contributions: 'Tiền ứng trước',
     noContributions: 'Chưa có ai đóng góp.',
     amount: 'Số tiền',
     date: 'Ngày',
@@ -60,7 +60,7 @@ const translations = {
     equal: 'Chia đều',
     custom: 'Tùy chỉnh',
     splits: 'Chia cho:',
-    edit: 'Chỉnh sửa',
+    edit: 'Sửa',
     remove: 'Xóa',
     expenses: 'Khoản chi',
     expensesDesc:
@@ -174,8 +174,8 @@ const TripPage: React.FC = () => {
   }
 
   return (
-    <main className="min-h-[60vh] bg-gray-50 py-8">
-      <section className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
+    <main className="min-h-[60vh] dark:bg-gray-900 py-8">
+      <section className="max-w-2xl mx-auto dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100">
         <TripInfoSection
           tripId={trip.id}
           tripName={trip.name}
