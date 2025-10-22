@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* small project styles */
+html, body, #root {
+  height: 100%;
+}
+body {
+  @apply bg-gray-50 text-gray-800 antialiased;
+}
+input, button, textarea, select {
+  @apply outline-none;
+}
+/* end */
