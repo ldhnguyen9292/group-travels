@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import About from './pages/About';
+import Help from './pages/Help';
 import Home from './pages/Home';
 import TripPage from './pages/TripPage';
 
@@ -12,6 +14,8 @@ function App() {
         <div className="flex-1 container mx-auto px-4 py-6">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/help" element={<Help />} />
             <Route path="/trip/:id" element={<TripPage />} />
           </Routes>
         </div>

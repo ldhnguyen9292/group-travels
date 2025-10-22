@@ -1,29 +1,76 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Trip } from '../types';
+import type { Trip } from '../types/trip';
 
-type Props = {
-    trips: Trip[]
-    onDelete: (id: string) => void
-}
+const translations = {
+  en: {
+    noTrips: 'No trips yet',
+    delete: 'Delete',
+    totalParticipants: 'Total Participants:',
+    participants: 'Participants:',
+  },
+  vn: {
+    noTrips: 'Chưa có chuyến đi nào',
+    delete: 'Xóa',
+    totalParticipants: 'Tổng số thành viên:',
+    participants: 'Thành viên:',
+  },
+};
 
-const TripList: React.FC<Props> = ({ trips, onDelete }) => {
-  if (!trips.length) return <p>No trips yet</p>;
+type Translation = (typeof translations)['en'];
+const TripList: React.FC<{ trips: Trip[]; onEdit: (trip: Trip) => void; onDelete: (id: string) => void }> = ({
+  trips,
+  onEdit,
+  onDelete,
+}) => {
+  const [lang, setLang] = useState('en');
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ lang: string }>) => setLang(e.detail?.lang || 'en');
+    window.addEventListener('app:language-changed', handler as EventListener);
+    setLang(localStorage.getItem('lang') || 'en');
+    return () => window.removeEventListener('app:language-changed', handler as EventListener);
+  }, []);
+  const t: Translation = translations[lang as 'en' | 'vn'] || translations.en;
+  if (!trips.length) return <p>{t.noTrips}</p>;
 
   return (
     <ul style={{ listStyle: 'none', padding: 0 }}>
-      {trips.map((t) => (
-        <li key={t.id} style={{ padding: 8, border: '1px solid #eee', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <Link to={`/trip/${t.id}`}><strong>{t.name}</strong></Link>
-            <div style={{ fontSize: 13, color: '#555' }}>
-              {t.startDate && `${t.startDate}`} {t.endDate ? `— ${t.endDate}` : ''}
+      {trips.map((tItem) => (
+        <li
+          key={tItem.id}
+          style={{
+            padding: 8,
+            border: '1px solid #eee',
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Link
+            to={`/trip/${tItem.id}`}
+            style={{ display: 'flex', alignItems: 'center', flex: 1, textDecoration: 'none', color: 'inherit' }}
+          >
+            <div style={{ flex: 1 }}>
+              <strong>{tItem.name}</strong>
+              <div style={{ fontSize: 13, color: '#555' }}>
+                {tItem.startDate && `${tItem.startDate}`} {tItem.endDate ? `— ${tItem.endDate}` : ''}
+              </div>
+              {/* Show total participants */}
+              <div style={{ fontSize: 13, color: '#666' }}>
+                {t.totalParticipants} {tItem.participants.length}
+              </div>
+              <div style={{ fontSize: 13, color: '#666' }}>{tItem.participants.map((p) => p.name).join(', ')}</div>
             </div>
-            <div style={{ fontSize: 13, color: '#666' }}>{t.participants.join(', ')}</div>
-          </div>
-          <div>
-            <button onClick={() => onDelete(t.id)} aria-label={`Delete ${t.name}`}>Delete</button>
-          </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => onEdit(tItem)} aria-label={`Edit ${tItem.name}`}>
+                {'Edit'}
+              </button>
+              <button onClick={() => onDelete(tItem.id)} aria-label={`${t.delete} ${tItem.name}`}>
+                {t.delete}
+              </button>
+            </div>
+          </Link>
         </li>
       ))}
     </ul>
