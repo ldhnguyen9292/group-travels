@@ -6,6 +6,7 @@ import ContributionList from './Contributions/ContributionList';
 
 interface Props {
   showForm: boolean;
+  setEditContributionId: (contributionId: string | null) => void;
   onShowForm: (show: boolean) => void;
   onAdd: (contribution: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onEdit: (contributionId: string, updated: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -19,6 +20,7 @@ interface Props {
 
 const ContributionSection: React.FC<Props> = ({
   showForm,
+  setEditContributionId,
   onShowForm,
   onAdd,
   onEdit,
@@ -31,7 +33,13 @@ const ContributionSection: React.FC<Props> = ({
 }) => (
   <section className="mt-6">
     <h3 className="text-lg font-semibold mb-2">{t.contributions}</h3>
-    <Modal open={showForm} onClose={() => onShowForm(false)}>
+    <Modal
+      open={showForm}
+      onClose={() => {
+        onShowForm(false);
+        setEditContributionId(null);
+      }}
+    >
       <ContributionForm
         participants={participants}
         onAdd={onAdd}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Loading from '../../components/Loading';
 import ContributionSection from '../../components/TripPage/ContributionSection';
 import ExpenseSection from '../../components/TripPage/ExpenseSection';
@@ -71,7 +71,6 @@ const translations = {
 const TripPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getById } = useTrips();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState<Trip | null>(null);
 
@@ -105,23 +104,8 @@ const TripPage: React.FC = () => {
   }, []);
   const t = translations[lang as 'en' | 'vn'] || translations.en;
 
-  if (loading) {
+  if (loading || !trip || !id) {
     return <Loading />;
-  }
-  if (!id || !trip) {
-    return (
-      <main className="min-h-[60vh] bg-gray-50 py-8 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="mb-4 text-lg text-gray-700">{t.notFound}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            {t.back}
-          </button>
-        </div>
-      </main>
-    );
   }
 
   // Calculate totals
@@ -154,8 +138,19 @@ const TripPage: React.FC = () => {
   }
 
   // Expense handlers
-  function handleAddExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) {
-    addExpense(expense);
+  function handleAddExpense(
+    expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> & { markAsContribution?: boolean }
+  ) {
+    const { markAsContribution, ...expenseData } = expense;
+    addExpense(expenseData);
+    if (markAsContribution && expenseData.paidBy && expenseData.amount) {
+      addContribution({
+        tripId: id!,
+        participant: expenseData.paidBy,
+        amount: expenseData.amount,
+        date: new Date().toISOString(),
+      });
+    }
     setShowExpenseForm(false);
     setEditExpenseId(null);
   }
@@ -192,6 +187,7 @@ const TripPage: React.FC = () => {
         />
         <ContributionSection
           showForm={showContributionForm}
+          setEditContributionId={setEditContributionId}
           onShowForm={setShowContributionForm}
           onAdd={handleAddContribution}
           onEdit={handleEditContribution}
@@ -206,6 +202,7 @@ const TripPage: React.FC = () => {
           tripId={id}
           isFormVisible={showExpenseForm}
           setFormVisible={setShowExpenseForm}
+          setEditExpenseId={setEditExpenseId}
           onAddExpense={handleAddExpense}
           onRemoveExpense={handleRemoveExpense}
           onEditExpense={handleEditExpense}

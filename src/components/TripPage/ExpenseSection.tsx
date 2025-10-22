@@ -8,7 +8,8 @@ interface ExpenseFormProps {
   tripId: string;
   isFormVisible: boolean;
   setFormVisible: (visible: boolean) => void;
-  onAddExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  setEditExpenseId: (expenseId: string | null) => void;
+  onAddExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> & { markAsContribution?: boolean }) => void;
   onRemoveExpense: (expenseId: string) => void;
   onOpenExpenseForm: (expenseId: string) => void; // open form to edit an existing expense
   onEditExpense: (expenseId: string, updated: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -22,6 +23,7 @@ const ExpenseSection: React.FC<ExpenseFormProps> = ({
   tripId,
   isFormVisible,
   setFormVisible,
+  setEditExpenseId,
   onAddExpense,
   onRemoveExpense,
   onOpenExpenseForm,
@@ -34,7 +36,13 @@ const ExpenseSection: React.FC<ExpenseFormProps> = ({
   return (
     <section className="mt-6">
       <h3 className="text-lg font-semibold mb-2">{t.expensesDetails}</h3>
-      <Modal open={isFormVisible} onClose={() => setFormVisible(false)}>
+      <Modal
+        open={isFormVisible}
+        onClose={() => {
+          setFormVisible(false);
+          setEditExpenseId(null);
+        }}
+      >
         <ExpenseForm
           participants={participants}
           tripId={tripId}

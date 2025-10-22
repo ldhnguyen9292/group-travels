@@ -30,10 +30,7 @@ const TripInfoSection: React.FC<Props> = ({
   return (
     <>
       <div className="flex justify-center text-sm text-gray-500 mb-4">
-        <button
-          onClick={() => navigate('/')}
-          className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-        >
+        <button onClick={() => navigate('/')} className="px-4 py-2 rounded bg-black text-white hover:bg-gray-700">
           {t.back}
         </button>
       </div>

@@ -4,7 +4,7 @@ import type { Expense, ExpenseSplit, Participant } from '../../../types/trip';
 interface Props {
   participants: Participant[];
   tripId: string;
-  onAdd: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onAdd: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> & { markAsContribution?: boolean }) => void;
   onEdit: (expenseId: string, updated: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
   expenseToEdit?: Expense | null;
 }
@@ -24,6 +24,7 @@ const translations = {
     customSplits: 'Custom splits',
     enterAmount: 'Enter amount',
     editExpense: 'Edit Expense',
+    markAsContribution: 'Mark as contribution for payer',
   },
   vn: {
     description: 'Mô tả',
@@ -39,6 +40,7 @@ const translations = {
     customSplits: 'Chia theo tùy chỉnh',
     enterAmount: 'Nhập số tiền',
     editExpense: 'Sửa khoản chi',
+    markAsContribution: 'Ghi nhận khoản này là đóng góp của người thanh toán',
   },
 };
 
@@ -56,6 +58,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
     attendees?: string;
     customSplits?: string;
   }>({});
+  const [markAsContribution, setMarkAsContribution] = useState(false);
   const lang = localStorage.getItem('lang') || 'en';
   const t = translations[lang as 'en' | 'vn'] || translations.en;
 
@@ -125,6 +128,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
       onAdd({
         ...data,
         date: new Date().toISOString(),
+        markAsContribution,
       });
     }
     setDescription('');
@@ -134,6 +138,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
     setSplitType('equal');
     setCustomSplits({});
     setErrors({});
+    setMarkAsContribution(false);
   }
 
   return (
@@ -183,6 +188,18 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
         </select>
         {errors.paidBy && <div className="text-red-500 text-xs mt-1">{errors.paidBy}</div>}
       </div>
+      {!expenseToEdit && (
+        <div>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={markAsContribution}
+              onChange={(e) => setMarkAsContribution(e.target.checked)}
+            />
+            {t.markAsContribution}
+          </label>
+        </div>
+      )}
       <div>
         <label className="block text-sm font-medium mb-1">{t.attendees}</label>
         <div className="flex flex-wrap gap-2">
