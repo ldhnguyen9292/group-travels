@@ -36,33 +36,35 @@ const translations = {
     expenses: 'Expenses',
     expensesDesc:
       'Expense UI will be migrated next. Existing app stores per-trip expenses in localStorage under key "expenses{id}".',
+    expenseWarning: 'Warning: Expenses exceed contributions!',
   },
   vn: {
     notFound: 'Không tìm thấy chuyến đi.',
     back: 'Quay lại',
     participants: 'Thành viên:',
-    totalMembers: 'Tổng thành viên:',
-    totalContributions: 'Tổng đóng góp:',
-    totalExpenses: 'Tổng chi phí:',
-    addExpense: 'Thêm chi phí',
-    addContribution: 'Thêm đóng góp',
+    totalMembers: 'Tổng số thành viên:',
+    totalContributions: 'Tổng số đóng góp:',
+    totalExpenses: 'Tổng chi tiêu:',
+    addExpense: 'Thêm khoản chi mới',
+    addContribution: 'Thêm khoản đóng góp',
     cancel: 'Hủy',
-    contributions: 'Đóng góp',
-    noContributions: 'Chưa có đóng góp.',
+    contributions: 'Khoản đóng góp',
+    noContributions: 'Chưa có ai đóng góp.',
     amount: 'Số tiền',
     date: 'Ngày',
-    expensesDetails: 'Chi tiết chi phí',
-    noExpenses: 'Chưa có chi phí.',
-    paidBy: 'Người trả',
-    splitType: 'Kiểu chia',
+    expensesDetails: 'Chi tiết chi tiêu',
+    noExpenses: 'Chưa có khoản chi nào.',
+    paidBy: 'Người thanh toán',
+    splitType: 'Cách chia',
     equal: 'Chia đều',
     custom: 'Tùy chỉnh',
     splits: 'Chia cho:',
-    edit: 'Sửa',
+    edit: 'Chỉnh sửa',
     remove: 'Xóa',
-    expenses: 'Chi phí',
+    expenses: 'Khoản chi',
     expensesDesc:
-      'Giao diện chi phí sẽ được cập nhật sau. Ứng dụng hiện lưu chi phí từng chuyến trong localStorage với key "expenses{id}".',
+      'Giao diện chi tiêu sẽ được cập nhật trong bản tiếp theo. Hiện tại, ứng dụng lưu chi tiêu của từng chuyến đi trong localStorage với khóa "expenses{id}".',
+    expenseWarning: 'Cảnh báo: Chi tiêu vượt quá tổng đóng góp!',
   },
 };
 
@@ -88,10 +90,13 @@ const TripPage: React.FC = () => {
   }, [id, getById]);
   const [lang, setLang] = useState('en');
   const { expenses, addExpense, editExpense, removeExpense } = useExpenses(id);
-  const { contributions, addContribution } = useContributions(id);
+  const { contributions, addContribution, editContribution, removeContribution } = useContributions(id);
+
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editExpenseId, setEditExpenseId] = useState<string | null>(null);
   const [showContributionForm, setShowContributionForm] = useState(false);
+  const [editContributionId, setEditContributionId] = useState<string | null>(null);
+
   useEffect(() => {
     const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
     window.addEventListener('app:language-changed', handler as EventListener);
@@ -123,11 +128,32 @@ const TripPage: React.FC = () => {
   const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
 
+  // Contribution handlers
   function handleAddContribution(contribution: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>) {
     addContribution(contribution);
     setShowContributionForm(false);
   }
 
+  function handleEditContributionEvent(contributionId: string) {
+    setEditContributionId(contributionId);
+    setShowContributionForm(true);
+  }
+
+  function handleEditContribution(
+    contributionId: string,
+    updated: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>
+  ) {
+    editContribution(contributionId, updated);
+    setEditContributionId(null);
+    setShowContributionForm(false);
+  }
+
+  function handleRemoveContribution(contributionId: string) {
+    removeContribution(contributionId);
+    setEditContributionId(null);
+  }
+
+  // Expense handlers
   function handleAddExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) {
     addExpense(expense);
     setShowExpenseForm(false);
@@ -142,6 +168,7 @@ const TripPage: React.FC = () => {
   function handleEditExpense(expenseId: string, updated: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) {
     editExpense(expenseId, updated);
     setEditExpenseId(null);
+    setShowExpenseForm(false);
   }
 
   function handleRemoveExpense(expenseId: string) {
@@ -167,9 +194,13 @@ const TripPage: React.FC = () => {
           showForm={showContributionForm}
           onShowForm={setShowContributionForm}
           onAdd={handleAddContribution}
+          onEdit={handleEditContribution}
+          onRemove={handleRemoveContribution}
+          onEditContributionEvent={handleEditContributionEvent}
           participants={trip.participants}
           contributions={contributions}
           t={t}
+          contributionToEdit={contributions.find((c) => c.id === editContributionId) || null}
         />
         <ExpenseSection
           tripId={id}

@@ -9,17 +9,25 @@ import { getOrCreateDeviceId } from '../../utils/device';
 const translations = {
   en: {
     trips: 'Trips',
-    noTrips: 'You have no trip',
+    noTrips: 'You have no trips yet',
     create: 'Create new trip',
     edit: 'Edit',
     remove: 'Remove',
+    prev: 'Prev',
+    next: 'Next',
+    page: 'Page',
+    of: 'of',
   },
   vn: {
     trips: 'Chuyến đi',
-    noTrips: 'Bạn chưa có chuyến đi nào',
+    noTrips: 'Chưa có chuyến đi nào.',
     create: 'Tạo chuyến đi mới',
     edit: 'Sửa',
     remove: 'Xóa',
+    prev: 'Trước',
+    next: 'Sau',
+    page: 'Trang',
+    of: 'trên',
   },
 };
 
@@ -102,17 +110,17 @@ const Home: React.FC = () => {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Prev
+                {t.prev}
               </button>
               <span className="mx-2">
-                Page {page} of {totalPages}
+                {t.page} {page} {t.of} {totalPages}
               </span>
               <button
                 className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
-                Next
+                {t.next}
               </button>
             </div>
           </>

@@ -24,7 +24,24 @@ export default function useContributions(tripId?: string) {
     localStorage.setItem(`contributions${tripId}`, JSON.stringify(updated));
   }
 
-  // Optionally, add removeContribution/editContribution here
+  function editContribution(
+    contributionId: string,
+    updatedData: Omit<Contribution, 'id' | 'tripId' | 'createdAt' | 'updatedAt'>
+  ) {
+    if (!tripId) return;
+    const updated = contributions.map((c) =>
+      c.id === contributionId ? { ...c, ...updatedData, updatedAt: new Date().toISOString() } : c
+    );
+    setContributions(updated);
+    localStorage.setItem(`contributions${tripId}`, JSON.stringify(updated));
+  }
 
-  return { contributions, addContribution, setContributions };
+  function removeContribution(contributionId: string) {
+    if (!tripId) return;
+    const updated = contributions.filter((c) => c.id !== contributionId);
+    setContributions(updated);
+    localStorage.setItem(`contributions${tripId}`, JSON.stringify(updated));
+  }
+
+  return { contributions, addContribution, editContribution, removeContribution };
 }

@@ -18,6 +18,8 @@ const translations = {
     saveTrip: 'Save trip',
     participants: 'Participants:',
     remove: 'Remove',
+    startDate: 'Start date',
+    endDate: 'End date',
   },
   vn: {
     createTrip: 'Tạo chuyến đi',
@@ -29,6 +31,8 @@ const translations = {
     saveTrip: 'Lưu chuyến đi',
     participants: 'Thành viên:',
     remove: 'Xóa',
+    startDate: 'Ngày bắt đầu',
+    endDate: 'Ngày kết thúc',
   },
 };
 
@@ -124,7 +128,7 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Start</label>
+              <label className="block text-sm font-medium mb-1">{t.startDate}</label>
               <input
                 type="date"
                 className={`w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.startDate ? 'border-red-400' : 'border-gray-300'}`}
@@ -134,7 +138,7 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
               {errors.startDate && <div className="text-red-500 text-xs mt-1">{errors.startDate}</div>}
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">End</label>
+              <label className="block text-sm font-medium mb-1">{t.endDate}</label>
               <input
                 type="date"
                 className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
