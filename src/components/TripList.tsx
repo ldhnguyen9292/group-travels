@@ -55,7 +55,7 @@ const TripList: React.FC<{ trips: Trip[]; onEdit: (trip: Trip) => void; onDelete
               style={{ display: 'flex', alignItems: 'center', flex: 1, textDecoration: 'none', color: 'inherit' }}
             >
               <div style={{ flex: 1 }} className="leading-relaxed">
-                <h3 className="font-semibold mb-2">{tItem.name}</h3>
+                <h3 className="font-semibold mb-2 text-primary!">{tItem.name}</h3>
                 <div>
                   {tItem.startDate && `${tItem.startDate}`} {tItem.endDate ? `— ${tItem.endDate}` : ''}
                 </div>

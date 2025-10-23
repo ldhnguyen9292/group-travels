@@ -11,20 +11,49 @@ body {
 
 /* === THEME COLORS === */
 @theme {
-  /* --- Core Palette --- */
+  /* Default: light mode */
+  --color-primary: #006a83; /* darker teal for visibility */
+  --color-primary-hover: #0096b0;
+  --color-secondary: #003366;
+
+  --color-background: #f5f9ff;
+  --color-surface: #ffffff;
+  --color-input-background: #f0f4fa;
+  --color-header: #ffffff;
+  --color-footer: #e9eef5;
+  --color-border: #d0d7e2;
+
+  --color-text-button: #ffffff;
+  --color-text-h1: #001f3f;
+  --color-text-h2: #003366;
+  --color-text-h3: #004c80;
+  --color-text-body: #1a2b3c;
+  --color-text-muted: #6b7a8c;
+  --color-text-strong: #000000;
+
+  --color-success: #2e8b57;
+  --color-success-hover: #256d46;
+  --color-danger: #d9534f;
+  --color-danger-hover: #b52b27;
+  --color-warning: #f0ad4e;
+  --color-warning-hover: #ec971f;
+  --color-info: #0d6efd;
+  --color-info-hover: #0b5ed7;
+}
+
+/* === Dark theme override === */
+[data-theme="dark"] {
   --color-primary: #22c1e8;
   --color-primary-hover: #53b4cf;
   --color-secondary: #bbddff;
 
-  /* --- Background Layers --- */
-  --color-background: #161616; /* Main background */
-  --color-surface: #1e1e1e; /* Cards, modals */
-  --color-input-background: #2a2a2a; /* Input fields */
-  --color-header: #1b1b1b; /* Header background */
-  --color-footer: #111111; /* Footer background */
+  --color-background: #161616;
+  --color-surface: #1e1e1e;
+  --color-input-background: #2a2a2a;
+  --color-header: #1b1b1b;
+  --color-footer: #111111;
   --color-border: #2b2b2b;
 
-  /* --- Text Colors --- */
   --color-text-button: #ffffff;
   --color-text-h1: #f5f9ff;
   --color-text-h2: #e4f2ff;
@@ -33,42 +62,35 @@ body {
   --color-text-muted: #8ca2b9;
   --color-text-strong: #ffffff;
 
-  /* --- Status Colors --- */
-  --color-success: #3cb371;        /* SeaGreen tone */
+  --color-success: #3cb371;
   --color-success-hover: #2e8b57;
-  --color-danger: #e05a5a;         /* Softer red */
+  --color-danger: #e05a5a;
   --color-danger-hover: #c94c4c;
-  --color-warning: #e0a84b;        /* Less saturated amber */
+  --color-warning: #e0a84b;
   --color-warning-hover: #c68a32;
-  --color-info: #9ca3af; /* neutral-400 */
-  --color-info-hover: #d1d5db; /* neutral-300 */
+  --color-info: #9ca3af;
+  --color-info-hover: #d1d5db;
 }
 
 /* === TYPOGRAPHY === */
 h1 {
   @apply text-4xl font-bold text-text-h1;
 }
-
 h2 {
   @apply text-3xl font-semibold text-text-h2;
 }
-
 h3 {
   @apply text-2xl font-semibold text-text-h3;
 }
-
 p {
   @apply text-base text-text-body;
 }
-
 strong {
   @apply font-semibold text-text-strong;
 }
-
 button {
   @apply text-sm font-medium text-text-button;
 }
-
 span, li, label {
   @apply text-text-body;
 }
@@ -78,11 +100,9 @@ header {
   background-color: var(--color-header);
   border-bottom: 1px solid var(--color-border);
 }
-
 main {
   background-color: var(--color-background);
 }
-
 footer {
   background-color: var(--color-footer);
   border-top: 1px solid var(--color-border);
@@ -94,16 +114,13 @@ footer {
   color: var(--color-primary);
   transition: color 0.2s ease, background-color 0.2s ease;
 }
-
 .hover-primary:hover {
   color: var(--color-primary-hover);
 }
-
 .hover-bg-primary {
   background-color: var(--color-primary);
   transition: background-color 0.2s ease;
 }
-
 .hover-bg-primary:hover {
   background-color: var(--color-primary-hover);
 }

@@ -53,7 +53,7 @@ const ParticipantsPage: React.FC = () => {
 
   return (
     <main className="max-w-2xl mx-auto py-10">
-      <div className="bg-card rounded-2xl shadow-lg p-8">
+      <div className="bg-surface rounded-2xl shadow-lg p-8">
         <h2 className="text-3xl font-bold mb-6 text-center drop-shadow">{trip.name}</h2>
         <div className="mb-6 flex flex-col items-center">
           <div className="text-lg font-semibold text-primary mb-1">
@@ -61,21 +61,21 @@ const ParticipantsPage: React.FC = () => {
           </div>
         </div>
         <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="bg-surface rounded-xl p-4 shadow">
+          <div className="bg-input-background rounded-xl p-4 shadow">
             <div className="text-sm text-secondary">{t.totalContributions}</div>
             <div className="text-xl font-bold text-primary">{totalContributions}</div>
           </div>
-          <div className="bg-surface rounded-xl p-4 shadow">
+          <div className="bg-input-background rounded-xl p-4 shadow">
             <div className="text-sm text-secondary">{t.totalExpenses}</div>
             <div className="text-xl font-bold text-primary">{totalExpenses}</div>
           </div>
-          <div className="bg-surface rounded-xl p-4 shadow">
+          <div className="bg-input-background rounded-xl p-4 shadow">
             <div className="text-sm text-secondary">{t.totalMembers}</div>
             <div className="text-xl font-bold text-primary">{trip.participants.length}</div>
           </div>
         </div>
         <h2 className="text-2xl font-semibold mb-4 text-center">{t.participants}</h2>
-        <ul className="divide-y divide-surface mb-6">
+        <ul className="divide-y divide-input-background mb-6">
           {trip.participants.map((p) => (
             <li key={p.id} className="py-3 flex justify-between items-center text-primary">
               <span className="font-medium text-lg">{p.name}</span>

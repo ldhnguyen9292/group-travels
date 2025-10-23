@@ -42,22 +42,30 @@ const TripInfoSection: React.FC<Props> = ({
           {t.ParticipantDetail}
         </button>
       </div>
-      <h2 className="text-center">{tripName}</h2>
-      <div className="mb-2 text-center">
+      <h2 className="mb-4 text-center">{tripName}</h2>
+      <div className="mb-4 text-center">
         {startDate} {endDate ? `— ${endDate}` : ''}
       </div>
-      <div className="mb-2 text-center">
+
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+        <div className="bg-input-background rounded-xl p-4 shadow">
+          <div className="text-sm text-secondary">{t.totalMembers}</div>
+          <div className="text-xl font-bold text-primary">{participants.length}</div>
+        </div>
+        <div className="bg-input-background rounded-xl p-4 shadow">
+          <div className="text-sm text-secondary">{t.totalContributions}</div>
+          <div className="text-xl font-bold text-primary">{totalContributions}</div>
+        </div>
+        <div className="bg-input-background rounded-xl p-4 shadow">
+          <div className="text-sm text-secondary">{t.totalExpenses}</div>
+          <div className="text-xl font-bold text-primary">{totalExpenses}</div>
+        </div>
+      </div>
+
+      <div className="mb-4 text-center">
         <strong>{t.participants}</strong> {participants.map((p) => p.name).join(', ')}
       </div>
-      <div className="mb-2 text-center">
-        <strong>{t.totalMembers}</strong> {participants.length}
-      </div>
-      <div className="mb-2 text-center">
-        <strong>{t.totalContributions}</strong> {totalContributions}
-      </div>
-      <div className="mb-2 text-center">
-        <strong>{t.totalExpenses}</strong> {totalExpenses}
-      </div>
+
       {totalExpenses > totalContributions && (
         <div className="mb-2 text-center text-danger font-semibold">
           {t.expenseWarning || 'Warning: Expenses exceed contributions!'}
