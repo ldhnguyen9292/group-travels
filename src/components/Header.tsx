@@ -58,7 +58,6 @@ const NAV = [
 const Header: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lang, setLang] = useState<string>(() => localStorage.getItem('lang') || 'en');
-  const [accountOpen, setAccountOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
@@ -77,7 +76,6 @@ const Header: React.FC = () => {
   };
 
   const mobileRef = useRef<HTMLDivElement | null>(null);
-  const accountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     localStorage.setItem('lang', lang);
@@ -86,14 +84,12 @@ const Header: React.FC = () => {
 
   const closeMenus = useCallback(() => {
     setMobileOpen(false);
-    setAccountOpen(false);
   }, []);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
       const target = e.target as Node;
       if (mobileRef.current && !mobileRef.current.contains(target) && mobileOpen) setMobileOpen(false);
-      if (accountRef.current && !accountRef.current.contains(target) && accountOpen) setAccountOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') closeMenus();
@@ -104,7 +100,7 @@ const Header: React.FC = () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [mobileOpen, accountOpen, closeMenus]);
+  }, [mobileOpen, closeMenus]);
 
   const t = translations[lang as 'en' | 'vn'] || translations.en;
 
@@ -115,6 +111,7 @@ const Header: React.FC = () => {
           <Logo t={t} />
         </Link>
 
+        {/* Desktop navigation */}
         <nav className="hidden md:flex gap-4 ml-6">
           {NAV.map((item) => (
             <NavLink
@@ -133,11 +130,46 @@ const Header: React.FC = () => {
 
         {/* RIGHT SIDE */}
         <div className="ml-auto flex items-center gap-3">
+          {/* === Mobile toggle button === */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden h-9 w-9 flex items-center justify-center rounded-full border border-border bg-surface text-primary! hover:bg-surface/80 hover:text-primary-hover! transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              // Close icon (X)
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              >
+                <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              // Hamburger icon
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+
           {/* === Theme toggle === */}
           <button
             onClick={toggleTheme}
             aria-label={theme === 'light' ? t.dark : t.light}
-            className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-surface text-primary! hover:bg-surface/80 hover:text-primary-hover! transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-surface hover:bg-surface/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary text-primary! hover:text-primary-hover!"
           >
             {theme !== 'light' ? (
               // Moon icon
@@ -163,10 +195,7 @@ const Header: React.FC = () => {
           </button>
 
           {/* === Language selector === */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="lang" className="sr-only">
-              {t.language}
-            </label>
+          <div className="hidden md:flex items-center gap-2">
             <select
               id="lang"
               value={lang}
@@ -201,7 +230,7 @@ const Header: React.FC = () => {
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value)}
-                  className="h-8 rounded border border-surface bg-surface text-sm text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="h-8 rounded border border-surface bg-surface text-sm text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary w-full"
                 >
                   <option value="en">{t.english}</option>
                   <option value="vn">{t.vietnamese}</option>
