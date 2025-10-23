@@ -31,18 +31,18 @@ const TripInfoSection: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-center text-sm text-gray-500 mb-4 gap-2">
-        <button onClick={() => navigate('/')} className="px-4 py-2 rounded bg-black text-white hover:bg-gray-700">
+      <div className="flex justify-center text-sm mb-4 gap-2">
+        <button onClick={() => navigate('/')} className="px-4 py-2 rounded bg-info text-on-primary hover:bg-info-hover">
           {t.back}
         </button>
         <button
           onClick={() => navigate(`/trip/${tripId}/participants`)}
-          className="px-4 py-2 rounded bg-black text-white hover:bg-gray-700"
+          className="px-4 py-2 rounded bg-info text-on-primary hover:bg-info-hover"
         >
           {t.ParticipantDetail}
         </button>
       </div>
-      <h2 className="text-3xl font-semibold mb-4 text-center text-[#a5b4fc]">{tripName}</h2>
+      <h2 className="text-center">{tripName}</h2>
       <div className="mb-2 text-center">
         {startDate} {endDate ? `— ${endDate}` : ''}
       </div>
@@ -59,15 +59,15 @@ const TripInfoSection: React.FC<Props> = ({
         <strong>{t.totalExpenses}</strong> {totalExpenses}
       </div>
       {totalExpenses > totalContributions && (
-        <div className="mb-2 text-center text-red-600 font-semibold">
+        <div className="mb-2 text-center text-danger font-semibold">
           {t.expenseWarning || 'Warning: Expenses exceed contributions!'}
         </div>
       )}
       <div className="flex justify-center mb-4 gap-4">
-        <button className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" onClick={onAddExpense}>
+        <button className="px-4 py-2 rounded bg-primary text-on-primary hover-bg-primary" onClick={onAddExpense}>
           {t.addExpense}
         </button>
-        <button className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" onClick={onAddContribution}>
+        <button className="px-4 py-2 rounded bg-primary text-on-primary hover-bg-primary" onClick={onAddContribution}>
           {t.addContribution}
         </button>
       </div>

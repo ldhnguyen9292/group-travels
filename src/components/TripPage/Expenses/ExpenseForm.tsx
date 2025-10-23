@@ -146,11 +146,11 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 dark:bg-gray-800 m-0 p-8 rounded-md">
+    <form onSubmit={handleSubmit} className="space-y-4 bg-surface m-0 p-8 rounded-md">
       <div>
         <label className="block text-sm font-medium mb-1">{t.splitType}</label>
         <select
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded border px-2 py-2"
           value={splitType}
           onChange={(e) => setSplitType(e.target.value as 'equal' | 'custom')}
         >
@@ -208,7 +208,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
         <div className="flex gap-2 mb-2">
           <button
             type="button"
-            className="px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 text-xs"
+            className="px-2 py-1 rounded text-xs bg-info text-on-primary"
             onClick={() => setAttendees(participants.map((p) => p.id))}
             disabled={attendees.length === participants.length}
           >
@@ -216,7 +216,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
           </button>
           <button
             type="button"
-            className="px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs"
+            className="px-2 py-1 rounded text-xs bg-danger text-on-primary"
             onClick={() => setAttendees([])}
             disabled={attendees.length === 0}
           >
@@ -237,7 +237,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
             </label>
           ))}
         </div>
-        {errors.attendees && <div className="text-red-500 text-xs mt-1">{errors.attendees}</div>}
+        {errors.attendees && <div className="text-danger text-xs mt-1">{errors.attendees}</div>}
       </div>
       {splitType === 'custom' && (
         <div>
@@ -251,7 +251,7 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
                   <span>{participant.name}:</span>
                   <input
                     type="number"
-                    className="w-32 rounded border px-2 py-1"
+                    className="w-32 rounded border border-surface bg-surface px-2 py-1"
                     value={customSplits[id] || ''}
                     onChange={(e) => setCustomSplits((prev) => ({ ...prev, [id]: e.target.value }))}
                     placeholder={t.enterAmount}
@@ -260,13 +260,13 @@ const ExpenseForm: React.FC<Props> = ({ participants, tripId, onAdd, onEdit, exp
               );
             })}
           </div>
-          {errors.customSplits && <div className="text-red-500 text-xs mt-1">{errors.customSplits}</div>}
+          {errors.customSplits && <div className="text-danger text-xs mt-1">{errors.customSplits}</div>}
         </div>
       )}
       <div className="flex justify-end">
         <button
           type="submit"
-          className="px-5 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 font-semibold shadow"
+          className="px-5 py-2 rounded bg-primary text-on-primary hover-bg-primary font-semibold shadow"
         >
           {expenseToEdit ? t.editExpense : t.addExpense}
         </button>

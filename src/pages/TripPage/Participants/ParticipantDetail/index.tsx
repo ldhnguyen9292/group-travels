@@ -82,46 +82,47 @@ const ParticipantDetail: React.FC = () => {
   const totalSpent = participantExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const net = totalContributed - totalSpent;
-  let netColor = '';
-  if (net > 0) netColor = 'text-green-600';
-  else if (net < 0) netColor = 'text-red-600';
 
   return (
     <main className="max-w-xl mx-auto py-10">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700 dark:text-indigo-300 drop-shadow">
-          {t.details}
-        </h2>
+      <div className="bg-card rounded-2xl shadow-lg p-8 bg-surface border border-surface">
+        <h2 className="text-3xl font-bold mb-6 text-center text-primary drop-shadow">{t.details}</h2>
         <div className="mb-6 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">{t.name}:</div>
-          <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-300 mb-2">{participant.name}</div>
+          <div className="text-lg font-semibold text-primary mb-1">{t.name}</div>
+          <div className="text-2xl font-bold text-primary mb-2">{participant.name}</div>
         </div>
         <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="bg-indigo-50 dark:bg-indigo-900 rounded-xl p-4 shadow">
-            <div className="text-sm text-gray-500">{t.totalContributed}</div>
-            <div className="text-xl font-bold text-indigo-700 dark:text-indigo-200">{totalContributed}</div>
+          <div className="bg-input-background rounded-xl p-4 shadow">
+            <div className="text-sm text-secondary">{t.totalContributed}</div>
+            <div className="text-xl font-bold text-primary">{totalContributed}</div>
           </div>
-          <div className="bg-indigo-50 dark:bg-indigo-900 rounded-xl p-4 shadow">
-            <div className="text-sm text-gray-500">{t.totalSpent}</div>
-            <div className="text-xl font-bold text-indigo-700 dark:text-indigo-200">{totalSpent}</div>
+          <div className="bg-input-background rounded-xl p-4 shadow">
+            <div className="text-sm text-secondary">{t.totalSpent}</div>
+            <div className="text-xl font-bold text-primary">{totalSpent}</div>
           </div>
           <div
-            className={`rounded-xl p-4 shadow ${net > 0 ? 'bg-green-50 dark:bg-green-900' : net < 0 ? 'bg-red-50 dark:bg-red-900' : 'bg-gray-50 dark:bg-gray-700'}`}
+            className={`rounded-xl p-4 shadow ${
+              net > 0
+                ? 'bg-input-background text-[var(--color-success)]'
+                : net < 0
+                  ? 'bg-input-background text-[var(--color-danger)]'
+                  : 'bg-surface text-[var(--color-text-body)]'
+            }`}
           >
-            <div className="text-sm text-gray-500">{t.net}</div>
-            <div className={`text-xl font-bold ${netColor}`}>{net}</div>
+            <div className="text-sm text-secondary">{t.net}</div>
+            <div className="text-xl font-bold">{net}</div>
           </div>
         </div>
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3 text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full"></span> {t.contributions}
+          <h3 className="text-lg font-semibold mb-3 text-primary flex items-center gap-2">
+            <span className="inline-block w-2 h-2 bg-primary rounded-full"></span> {t.contributions}
           </h3>
           {participantContributions.length === 0 ? (
-            <div className="text-gray-400 italic text-center">{t.noContributions}</div>
+            <div className="text-muted italic text-center">{t.noContributions}</div>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="divide-y divide-surface">
               {participantContributions.map((c) => (
-                <li key={c.id} className="py-2 flex justify-between text-gray-700 dark:text-gray-200">
+                <li key={c.id} className="py-2 flex justify-between text-primary">
                   <span className="font-medium">{new Date(c.date).toLocaleDateString()}</span>
                   <span className="font-semibold">{c.amount}</span>
                 </li>
@@ -130,15 +131,15 @@ const ParticipantDetail: React.FC = () => {
           )}
         </div>
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3 text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full"></span> {t.expensesPaid}
+          <h3 className="text-lg font-semibold mb-3 text-primary flex items-center gap-2">
+            <span className="inline-block w-2 h-2 bg-primary rounded-full"></span> {t.expensesPaid}
           </h3>
           {participantExpenses.length === 0 ? (
-            <div className="text-gray-400 italic text-center">{t.noExpenses}</div>
+            <div className="text-muted italic text-center">{t.noExpenses}</div>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="divide-y divide-surface">
               {participantExpenses.map((e) => (
-                <li key={e.id} className="py-2 flex justify-between text-gray-700 dark:text-gray-200">
+                <li key={e.id} className="py-2 flex justify-between text-primary">
                   <span className="font-medium">{e.description}</span>
                   <span className="font-semibold">{e.amount}</span>
                 </li>
@@ -149,7 +150,7 @@ const ParticipantDetail: React.FC = () => {
         <div className="flex justify-center mt-6">
           <Link
             to={`/trip/${trip.id}/participants`}
-            className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-semibold shadow transition"
+            className="px-6 py-2 rounded-xl bg-primary text-text-button hover:bg-primary-hover font-semibold shadow transition"
           >
             {t.back}
           </Link>

@@ -29,17 +29,17 @@ const Footer: React.FC = () => {
   const t: Translation = translations[lang as 'en' | 'vn'] || translations.en;
 
   return (
-    <footer className="bg-[#0d1117] border-t border-gray-800 text-gray-400">
+    <footer className="bg-background border-t border-surface text-secondary">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center text-center gap-3">
           <Link to="/" className="inline-flex items-center gap-3">
             <img src="/group-travel-logo.svg" alt="Group Travel Logo" className="w-10 h-10" />
-            <span className="text-lg font-semibold text-gray-100">{t.groupTravel}</span>
+            <span className="text-lg font-semibold">{t.groupTravel}</span>
           </Link>
 
-          <p className="max-w-md text-sm text-gray-400 leading-relaxed">{t.desc}</p>
+          <p className="max-w-md text-sm leading-relaxed">{t.desc}</p>
 
-          <div className="text-xs text-gray-600 mt-2">
+          <div className="text-xs text-muted mt-2">
             © {new Date().getFullYear()} {t.groupTravel}. {t.copyright}
           </div>
         </div>

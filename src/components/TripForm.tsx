@@ -103,12 +103,12 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
     <section className="mb-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-4 mb-4">
-          <h3 className="text-xl font-semibold m-0 flex-1 text-white">{t.createTrip}</h3>
+          <h3 className="text-xl font-semibold m-0 flex-1">{t.createTrip}</h3>
           {onCancel && (
             <button
               onClick={onCancel}
               aria-label={t.hide}
-              className="text-gray-400 hover:text-gray-200 px-2 py-1 rounded border border-gray-600 bg-slate-700"
+              className="text-secondary hover:text-primary px-2 py-1 rounded border border-surface bg-input-background"
             >
               {t.hide}
             </button>
@@ -118,31 +118,31 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-200">{t.tripName}</label>
+              <label className="block text-sm font-medium mb-1 text-primary">{t.tripName}</label>
               <input
-                className={`w-full rounded border px-3 py-2 bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.name ? 'border-red-400' : 'border-gray-600'}`}
+                className={`w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.name ? 'border-danger' : ''}`}
                 placeholder={t.tripName}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
+              {errors.name && <div className="text-danger text-xs mt-1">{errors.name}</div>}
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1 text-gray-200">{t.startDate}</label>
+                <label className="block text-sm font-medium mb-1 text-primary">{t.startDate}</label>
                 <input
                   type="date"
-                  className={`w-full rounded border px-3 py-2 bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.startDate ? 'border-red-400' : 'border-gray-600'}`}
+                  className={`w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.startDate ? 'border-danger' : ''}`}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
-                {errors.startDate && <div className="text-red-400 text-xs mt-1">{errors.startDate}</div>}
+                {errors.startDate && <div className="text-danger text-xs mt-1">{errors.startDate}</div>}
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1 text-gray-200">{t.endDate}</label>
+                <label className="block text-sm font-medium mb-1 text-primary">{t.endDate}</label>
                 <input
                   type="date"
-                  className="w-full rounded border border-gray-600 bg-slate-900 text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={endDate}
                   min={startDate || undefined}
                   onChange={(e) => setEndDate(e.target.value)}
@@ -152,10 +152,10 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-200">{t.participants}</label>
+            <label className="block text-sm font-medium mb-1 text-primary">{t.participants}</label>
             <div className="flex gap-2 mb-2">
               <input
-                className={`flex-1 rounded border px-3 py-2 bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.participants ? 'border-red-400' : 'border-gray-600'}`}
+                className={`flex-1 rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.participants ? 'border-danger' : ''}`}
                 placeholder={t.addParticipants}
                 value={participantInput}
                 onChange={(e) => setParticipantInput(e.target.value)}
@@ -169,12 +169,12 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
               <button
                 type="button"
                 onClick={addParticipantFromInput}
-                className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                className="px-3 py-2 rounded bg-primary text-on-primary hover:bg-primary-dark"
               >
                 {t.add}
               </button>
             </div>
-            {errors.participants && <div className="text-red-400 text-xs mb-2">{errors.participants}</div>}
+            {errors.participants && <div className="text-danger text-xs mb-2">{errors.participants}</div>}
             {participants.length > 0 && (
               <ul className="flex flex-wrap gap-2">
                 {participants.map((p, idx) => (
@@ -192,7 +192,7 @@ const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 font-semibold shadow"
+              className="px-5 py-2 rounded bg-primary text-on-primary hover:bg-primary-hover font-semibold shadow"
             >
               {t.saveTrip}
             </button>

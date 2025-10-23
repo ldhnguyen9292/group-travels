@@ -6,12 +6,12 @@ import Help from './pages/Help';
 import Home from './pages/Home';
 import TripPage from './pages/TripPage';
 import ParticipantsPage from './pages/TripPage/Participants';
-import ParticipantDetail from './pages/TripPage/Participants/ParticipantDetail';
+import ParticipantDetail from './pages/TripPage/Participants/ParticipantDetail/index';
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col bg-background text-primary">
         <Header />
         <div className="flex-1 container mx-auto px-4 py-6">
           <Routes>

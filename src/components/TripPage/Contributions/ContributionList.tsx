@@ -15,26 +15,26 @@ const ContributionList: React.FC<ContributionListProps> = ({
   onRemoveContribution,
 }) => {
   if (contributions.length === 0) {
-    return <div className="text-gray-500">{t.noContributions}</div>;
+    return <div className="text-secondary">{t.noContributions}</div>;
   }
   return (
-    <ul className="divide-y divide-gray-200">
+    <ul className="divide-y divide-surface">
       {contributions.map((c) => (
         <li key={c.id} className="py-2">
           <div className="flex justify-between items-center">
             <div className="grow">
               <div className="font-semibold">{c.participant.name}</div>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-muted">
                 {t.amount}: {c.amount}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-muted">
                 {t.date}: {new Date(c.date).toLocaleDateString()}
               </div>
             </div>
             <div className="flex gap-2">
               {onEditContributionEvent && (
                 <button
-                  className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700"
+                  className="px-2 py-1 rounded bg-success text-on-success hover:bg-success-dark"
                   onClick={() => onEditContributionEvent(c.id)}
                 >
                   {t.edit}
@@ -42,7 +42,7 @@ const ContributionList: React.FC<ContributionListProps> = ({
               )}
               {onRemoveContribution && (
                 <button
-                  className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                  className="px-2 py-1 rounded bg-danger text-on-danger hover:bg-danger-dark"
                   onClick={() => onRemoveContribution(c.id)}
                 >
                   {t.remove}

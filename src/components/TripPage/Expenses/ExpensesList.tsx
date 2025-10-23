@@ -39,15 +39,15 @@ const ExpensesList: React.FC<Props> = ({ expenses, onEdit, onRemove }) => {
   const lang = localStorage.getItem('lang') || 'en';
   const t = translations[lang as 'en' | 'vn'] || translations.en;
   if (expenses.length === 0) {
-    return <div className="text-gray-500">{t.noExpenses}</div>;
+    return <div>{t.noExpenses}</div>;
   }
   return (
-    <ul className="divide-y divide-gray-200">
+    <ul className="divide-y divide-surface">
       {expenses.map((e: Expense) => (
         <li key={e.id} className="py-3">
-          <div className="flex justify-between items-center text-sm text-gray-400">
+          <div className="flex justify-between items-center text-sm">
             <div>
-              <div className="text-lg font-semibold text-gray-50">{e.description}</div>
+              <div className="text-lg font-semibold">{e.description}</div>
               <div>
                 {t.paidBy}: {e.paidBy.name}
               </div>
@@ -76,13 +76,13 @@ const ExpensesList: React.FC<Props> = ({ expenses, onEdit, onRemove }) => {
             </div>
             <div className="flex gap-2">
               <button
-                className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700"
+                className="px-2 py-1 rounded bg-success text-on-success hover-bg-success"
                 onClick={() => onEdit(e.id)}
               >
                 {t.edit}
               </button>
               <button
-                className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                className="px-2 py-1 rounded bg-danger text-on-danger hover-bg-danger"
                 onClick={() => onRemove(e.id)}
               >
                 {t.remove}

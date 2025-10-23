@@ -45,7 +45,7 @@ type Translation = (typeof translations)['en'];
 const Logo: React.FC<{ t: Translation }> = ({ t }) => (
   <span className="inline-flex items-center gap-2">
     <img src="/group-travel-logo.svg" alt="Group Travel Logo" className="w-10 h-10" />
-    <span className="text-lg font-semibold text-gray-100">{t.groupTravel}</span>
+    <span className="text-lg font-semibold">{t.groupTravel}</span>
   </span>
 );
 
@@ -93,7 +93,7 @@ const Header: React.FC = () => {
   const t = translations[lang as 'en' | 'vn'] || translations.en;
 
   return (
-    <header className="bg-[#0d1117] border-b border-gray-800">
+    <header className="bg-background border-b border-surface">
       <div className="container mx-auto px-4 py-3 flex items-center gap-4">
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <Logo t={t} />
@@ -106,8 +106,8 @@ const Header: React.FC = () => {
               to={item.to}
               className={({ isActive }) =>
                 `text-sm font-medium px-2 py-1 rounded transition-colors ${
-                  isActive ? 'text-[#8f87ff]' : 'text-gray-300'
-                } hover:text-[#8f87ff]`
+                  isActive ? 'text-primary' : 'text-secondary'
+                } hover:text-primary`
               }
             >
               {t[item.key as keyof typeof t]}
@@ -124,7 +124,7 @@ const Header: React.FC = () => {
               id="lang"
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              className="h-8 text-sm rounded border border-gray-700 bg-[#121826] text-gray-200 px-2 focus:outline-none focus:ring-1 focus:ring-[#6c63ff]"
+              className="h-8 text-sm rounded border border-surface bg-surface text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary"
               aria-label={t.language}
             >
               <option value="en">{t.english}</option>
@@ -136,25 +136,25 @@ const Header: React.FC = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div ref={mobileRef} className="md:hidden border-t border-gray-800 bg-[#0d1117]">
+        <div ref={mobileRef} className="md:hidden border-t border-surface bg-background">
           <div className="px-4 py-3 space-y-2">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-gray-300 hover:text-[#8f87ff]"
+                className="block text-sm font-medium text-secondary hover:text-primary"
               >
                 {t[item.key as keyof typeof t]}
               </NavLink>
             ))}
 
-            <div className="pt-2 border-t border-gray-800">
+            <div className="pt-2 border-t border-surface">
               <div className="flex items-center gap-2 mt-2">
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value)}
-                  className="h-8 rounded border border-gray-700 bg-[#121826] text-sm text-gray-200 px-2 focus:outline-none focus:ring-1 focus:ring-[#6c63ff]"
+                  className="h-8 rounded border border-surface bg-surface text-sm text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="en">{t.english}</option>
                   <option value="vn">{t.vietnamese}</option>

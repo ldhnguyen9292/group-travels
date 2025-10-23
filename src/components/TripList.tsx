@@ -54,8 +54,8 @@ const TripList: React.FC<{ trips: Trip[]; onEdit: (trip: Trip) => void; onDelete
               to={`/trip/${tItem.id}`}
               style={{ display: 'flex', alignItems: 'center', flex: 1, textDecoration: 'none', color: 'inherit' }}
             >
-              <div style={{ flex: 1 }} className="text-gray-300 leading-relaxed">
-                <strong className="text-2xl font-semibold mb-2 text-[#c7d2fe]">{tItem.name}</strong>
+              <div style={{ flex: 1 }} className="leading-relaxed">
+                <h3 className="font-semibold mb-2">{tItem.name}</h3>
                 <div>
                   {tItem.startDate && `${tItem.startDate}`} {tItem.endDate ? `— ${tItem.endDate}` : ''}
                 </div>
@@ -70,14 +70,14 @@ const TripList: React.FC<{ trips: Trip[]; onEdit: (trip: Trip) => void; onDelete
               <button
                 onClick={() => onEdit(tItem)}
                 aria-label={`Edit ${tItem.name}`}
-                className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700"
+                className="px-2 py-1 rounded bg-success text-on-success hover:bg-success-dark"
               >
                 {t.edit}
               </button>
               <button
                 onClick={() => onDelete(tItem.id)}
                 aria-label={`${t.delete} ${tItem.name}`}
-                className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                className="px-2 py-1 rounded bg-danger text-on-danger hover:bg-danger-dark"
               >
                 {t.delete}
               </button>

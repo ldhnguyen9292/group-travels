@@ -43,18 +43,18 @@ const About: React.FC = () => {
   const t = translations[lang as 'en' | 'vn'] || translations.en;
 
   return (
-    <main className="min-h-[70vh] bg-[#0f172a] py-12 px-4">
-      <section className="max-w-3xl mx-auto bg-[#1e293b] rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100">
-        <h2 className="text-3xl font-semibold mb-4 text-center text-[#a5b4fc]">{t.title}</h2>
-        <p className="mb-6 text-gray-300 text-center leading-relaxed">{t.desc}</p>
-        <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-6">
+    <main className="min-h-[70vh] bg-background py-12 px-4">
+      <section className="max-w-3xl mx-auto bg-card rounded-2xl shadow-lg p-8 border bg-surface border-surface">
+        <h2 className="text-3xl font-semibold mb-4 text-center">{t.title}</h2>
+        <p className="mb-6 text-center leading-relaxed">{t.desc}</p>
+        <ul className="list-disc pl-6 space-y-2 mb-6">
           {t.features.map((f, i) => (
-            <li key={i} className="hover:text-[#a5b4fc] transition-colors duration-200">
+            <li key={i} className="hover:text-primary transition-colors duration-200">
               {f}
             </li>
           ))}
         </ul>
-        <div className="text-center text-gray-500 text-sm border-t border-[#334155] pt-4">{t.version}</div>
+        <div className="text-center text-secondary text-sm border-t border-surface pt-4">{t.version}</div>
       </section>
     </main>
   );

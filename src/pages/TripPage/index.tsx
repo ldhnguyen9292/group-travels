@@ -174,8 +174,8 @@ const TripPage: React.FC = () => {
   }
 
   return (
-    <main className="min-h-[60vh] dark:bg-gray-900 py-8">
-      <section className="max-w-2xl mx-auto dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-[#334155] text-gray-100">
+    <main className="min-h-[60vh] bg-background py-8">
+      <section className="max-w-2xl mx-auto bg-card rounded-2xl shadow-lg p-8 bg-surface border border-surface text-primary">
         <TripInfoSection
           tripId={trip.id}
           tripName={trip.name}

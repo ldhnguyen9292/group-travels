@@ -76,11 +76,11 @@ const ContributionForm: React.FC<Props> = ({ participants, onAdd, onEdit, contri
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 dark:bg-gray-800 m-0 p-8 rounded-md">
+    <form onSubmit={handleSubmit} className="space-y-4 bg-surface m-0 p-8 rounded-md">
       <div>
         <label className="block text-sm font-medium mb-1">{t.participant}</label>
         <select
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded border border-surface bg-input-background px-2 py-2"
           value={participantId}
           onChange={(e) => setParticipantId(e.target.value)}
         >
@@ -91,33 +91,33 @@ const ContributionForm: React.FC<Props> = ({ participants, onAdd, onEdit, contri
             </option>
           ))}
         </select>
-        {errors.participantId && <div className="text-red-500 text-xs mt-1">{errors.participantId}</div>}
+        {errors.participantId && <div className="text-danger text-xs mt-1">{errors.participantId}</div>}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">{t.amount}</label>
         <input
           type="number"
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded border border-surface bg-input-background px-3 py-2"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder={t.amount}
         />
-        {errors.amount && <div className="text-red-500 text-xs mt-1">{errors.amount}</div>}
+        {errors.amount && <div className="text-danger text-xs mt-1">{errors.amount}</div>}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">{t.date}</label>
         <input
           type="date"
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded border border-surface bg-input-background px-3 py-2"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
-        {errors.date && <div className="text-red-500 text-xs mt-1">{errors.date}</div>}
+        {errors.date && <div className="text-danger text-xs mt-1">{errors.date}</div>}
       </div>
       <div className="flex justify-end">
         <button
           type="submit"
-          className="px-5 py-2 rounded bg-green-600 text-white hover:bg-green-700 font-semibold shadow"
+          className="px-5 py-2 rounded bg-success text-on-success hover-bg-success font-semibold shadow"
         >
           {contributionToEdit ? t.editContribution : t.addContribution}
         </button>
