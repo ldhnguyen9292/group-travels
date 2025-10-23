@@ -103,10 +103,10 @@ const ParticipantDetail: React.FC = () => {
           <div
             className={`rounded-xl p-4 shadow ${
               net > 0
-                ? 'bg-input-background text-[var(--color-success)]'
+                ? 'bg-input-background text-success'
                 : net < 0
-                  ? 'bg-input-background text-[var(--color-danger)]'
-                  : 'bg-surface text-[var(--color-text-body)]'
+                  ? 'bg-input-background text-danger'
+                  : 'bg-surface text-text-body'
             }`}
           >
             <div className="text-sm text-secondary">{t.net}</div>
