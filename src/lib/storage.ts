@@ -9,7 +9,7 @@ import type {
 } from '../types/trip';
 import { normaliseDate, todayISO } from './date';
 import { createId } from './id';
-import { DEFAULT_CURRENCY, isCurrency } from './money';
+import { DEFAULT_CURRENCY, clampAmount, isCurrency } from './money';
 
 export const STORAGE_KEY = 'group-travel:v2';
 
@@ -32,9 +32,9 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
-function asNumber(value: unknown): number {
-  const parsed = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+/** Amounts from storage or an imported file are clamped into a range that adds up exactly. */
+function asAmount(value: unknown): number {
+  return clampAmount(typeof value === 'number' ? value : Number(value));
 }
 
 function asOptionalDate(value: unknown): string | undefined {
@@ -92,7 +92,7 @@ function normaliseSplit(value: unknown): ExpenseSplit | null {
   const legacy = isRecord(value.participant) ? asString(value.participant.id) : '';
   const participantId = asString(value.participantId) || legacy;
   if (!participantId) return null;
-  return { participantId, amount: asNumber(value.amount) };
+  return { participantId, amount: asAmount(value.amount) };
 }
 
 function normaliseExpense(value: unknown, fallbackTripId?: ID): Expense | null {
@@ -114,7 +114,7 @@ function normaliseExpense(value: unknown, fallbackTripId?: ID): Expense | null {
     id: asString(value.id) || createId(),
     tripId,
     description: asString(value.description).trim() || '—',
-    amount: asNumber(value.amount),
+    amount: asAmount(value.amount),
     paidById,
     splits,
     splitType,
@@ -138,7 +138,7 @@ function normaliseContribution(value: unknown, fallbackTripId?: ID): Contributio
     id: asString(value.id) || createId(),
     tripId,
     participantId,
-    amount: asNumber(value.amount),
+    amount: asAmount(value.amount),
     date: normaliseDate(asString(value.date), todayISO()),
     createdAt,
     updatedAt: asString(value.updatedAt) ? asTimestamp(value.updatedAt) : createdAt,

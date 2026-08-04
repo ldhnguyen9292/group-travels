@@ -326,6 +326,16 @@
     cursor: pointer;
   }
 
+  /**
+   * Every amount on screen. Intl puts a non-breaking space before symbols like
+   * ₫ and digit groups offer no break point, so a large amount would otherwise
+   * spill straight out of its box: `anywhere` lets it wrap as a last resort.
+   */
+  .money {
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
   /* --- small pieces --- */
   .chip {
     display: inline-flex;

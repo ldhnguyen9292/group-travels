@@ -75,30 +75,25 @@ export default function TripCard({
         {hidden > 0 && <span className="chip text-ink-muted">+{hidden}</span>}
       </div>
 
-      <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-4 text-center">
-        <div>
-          <dt className="text-[0.6875rem] font-medium tracking-wide text-ink-muted uppercase">
-            {t.trip.fundIn}
-          </dt>
-          <dd className="mt-0.5 text-sm font-semibold tabular-nums">
+      {/* Rows rather than columns: an amount of any length stays inside the card. */}
+      <dl className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 text-ink-muted">{t.trip.fundIn}</dt>
+          <dd className="money text-right font-semibold">
             {formatMoney(contributionsTotal, trip.currency, locale)}
           </dd>
         </div>
-        <div>
-          <dt className="text-[0.6875rem] font-medium tracking-wide text-ink-muted uppercase">
-            {t.trip.spent}
-          </dt>
-          <dd className="mt-0.5 text-sm font-semibold tabular-nums">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 text-ink-muted">{t.trip.spent}</dt>
+          <dd className="money text-right font-semibold">
             {formatMoney(expensesTotal, trip.currency, locale)}
           </dd>
         </div>
-        <div>
-          <dt className="text-[0.6875rem] font-medium tracking-wide text-ink-muted uppercase">
-            {t.trip.remaining}
-          </dt>
+        <div className="flex items-baseline justify-between gap-3 border-t border-border pt-1.5">
+          <dt className="shrink-0 text-ink-muted">{t.trip.remaining}</dt>
           <dd
             className={cx(
-              'mt-0.5 text-sm font-semibold tabular-nums',
+              'money text-right font-semibold',
               remaining < 0 ? 'text-bad' : 'text-good',
             )}
           >

@@ -69,11 +69,47 @@ export function splitEvenly(total: number, count: number, currency: CurrencyCode
   return Array.from({ length: count }, (_, index) => (base + (index < leftover ? 1 : 0)) / factor);
 }
 
+/**
+ * Largest amount the app accepts. Above this, minor units approach
+ * Number.MAX_SAFE_INTEGER (9.007e15) and sums stop being exact: splitting 1e14
+ * USD three ways adds back up to 99999999999999.98 instead of 1e14. One
+ * trillion keeps minor units at 1e14 for every supported currency, with room to
+ * spare, and is far beyond any real trip.
+ */
+export const MAX_AMOUNT = 1_000_000_000_000;
+
+export type AmountResult = { ok: true; value: number } | { ok: false; reason: 'invalid' | 'too-large' };
+
+/** Parse a user-typed total, saying *why* it was rejected. */
+export function readAmount(input: string): AmountResult {
+  const trimmed = input.trim();
+  if (!trimmed) return { ok: false, reason: 'invalid' };
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value <= 0) return { ok: false, reason: 'invalid' };
+  if (value > MAX_AMOUNT) return { ok: false, reason: 'too-large' };
+  return { ok: true, value };
+}
+
 /** Parse a user-typed amount. Returns null when it is not a usable positive number. */
 export function parseAmount(input: string): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
+  const result = readAmount(input);
+  return result.ok ? result.value : null;
+}
+
+/**
+ * Split fields may legitimately be blank or zero, unlike a total.
+ * Returns null only for values this app cannot add up safely.
+ */
+export function readOptionalAmount(input: string | undefined): number | null {
+  const trimmed = (input ?? '').trim();
+  if (!trimmed) return 0;
   const value = Number(trimmed);
-  if (!Number.isFinite(value) || value <= 0) return null;
+  if (!Number.isFinite(value) || value < 0 || value > MAX_AMOUNT) return null;
   return value;
+}
+
+/** Clamp an amount coming from stored or imported data into a safe range. */
+export function clampAmount(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(value, 0), MAX_AMOUNT);
 }
