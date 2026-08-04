@@ -18,6 +18,17 @@ services:
         name: Cache-Control
         value: public, max-age=31536000, immutable
 
+      # index.html names those fingerprinted files, so it is the only thing that
+      # has to be re-fetched for a deploy to reach anyone. Cached, it pins users
+      # to the old build indefinitely. Deliberately not declared as /* — that
+      # would collide with the immutable rule above.
+      - path: /
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+
     buildFilter:
       paths:
         - src/**
