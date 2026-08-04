@@ -25,7 +25,7 @@ export default function StatTile({ label, value, icon, tone = 'neutral', hint }:
         {icon}
         <span className="truncate">{label}</span>
       </div>
-      <p className={cx('mt-1.5 text-xl font-semibold tabular-nums', TONES[tone])}>{value}</p>
+      <p className={cx('money mt-1.5 text-lg font-semibold sm:text-xl', TONES[tone])}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>}
     </div>
   );
