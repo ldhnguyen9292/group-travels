@@ -13,6 +13,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import {
   IconAlert,
   IconArrowLeft,
+  IconCalendar,
   IconPencil,
   IconPlus,
   IconReceipt,
@@ -57,8 +58,8 @@ function Section({
   return (
     <section className="card p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-base font-semibold">
-          <span className="text-brand">{icon}</span>
+        <h2 className="flex items-center gap-2.5 text-base font-semibold">
+          <span className="puck h-7 w-7">{icon}</span>
           {title}
         </h2>
         {action}
@@ -153,11 +154,14 @@ export default function TripPage() {
         {t.trip.backToTrips}
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="hero flex flex-wrap items-start justify-between gap-3 px-5 py-5 sm:px-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold sm:text-3xl">{trip.name}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-            <span>{dates || t.home.noDates}</span>
+          <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <IconCalendar className="h-3.5 w-3.5 shrink-0" />
+              {dates || t.home.noDates}
+            </span>
             <span className="badge badge-brand">{trip.currency}</span>
           </p>
         </div>
@@ -181,22 +185,23 @@ export default function TripPage() {
         <StatTile
           label={t.trip.members}
           value={String(trip.participants.length)}
-          icon={<IconUsers className="h-3.5 w-3.5" />}
+          icon={<IconUsers className="h-4 w-4" />}
+          tone="brand"
         />
         <StatTile
           label={t.trip.fundIn}
           value={formatMoney(totals.contributions, trip.currency, locale)}
-          icon={<IconWallet className="h-3.5 w-3.5" />}
+          icon={<IconWallet className="h-4 w-4" />}
         />
         <StatTile
           label={t.trip.spent}
           value={formatMoney(totals.expenses, trip.currency, locale)}
-          icon={<IconReceipt className="h-3.5 w-3.5" />}
+          icon={<IconReceipt className="h-4 w-4" />}
         />
         <StatTile
           label={t.trip.remaining}
           value={formatMoney(totals.remaining, trip.currency, locale)}
-          icon={<IconScale className="h-3.5 w-3.5" />}
+          icon={<IconScale className="h-4 w-4" />}
           tone={totals.remaining < 0 ? 'bad' : 'good'}
         />
       </div>

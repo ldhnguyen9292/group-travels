@@ -45,7 +45,7 @@ export default function About() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <section className="card p-6">
+      <section className="hero p-6">
         <h1 className="text-2xl font-semibold sm:text-3xl">{t.about.title}</h1>
         <p className="mt-3 leading-relaxed text-ink-muted">{t.about.desc}</p>
 

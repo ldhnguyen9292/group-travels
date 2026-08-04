@@ -3,7 +3,16 @@ import { Link, useParams } from 'react-router-dom';
 import ShareDialog from '../../../../components/ShareDialog';
 import Button from '../../../../components/ui/Button';
 import EmptyState from '../../../../components/ui/EmptyState';
-import { IconAlert, IconArrowLeft, IconShare } from '../../../../components/ui/Icons';
+import Avatar from '../../../../components/ui/Avatar';
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconCoins,
+  IconReceipt,
+  IconScale,
+  IconShare,
+  IconWallet,
+} from '../../../../components/ui/Icons';
 import StatTile from '../../../../components/ui/StatTile';
 import { btn } from '../../../../components/ui/classes';
 import { useI18n } from '../../../../i18n/context';
@@ -105,9 +114,12 @@ export default function ParticipantDetail() {
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold sm:text-3xl">{participant.name}</h1>
-          <p className="mt-1 text-sm text-ink-muted">{trip.name}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar name={participant.name} className="h-12 w-12 text-base" />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold sm:text-3xl">{participant.name}</h1>
+            <p className="mt-1 text-sm text-ink-muted">{trip.name}</p>
+          </div>
         </div>
         <Button variant="secondary" onClick={() => setShareOpen(true)}>
           <IconShare className="h-4 w-4" />
@@ -126,14 +138,17 @@ export default function ParticipantDetail() {
         <StatTile
           label={t.participants.paidIn}
           value={formatMoney(balance.contributed, trip.currency, locale)}
+          icon={<IconWallet className="h-4 w-4" />}
         />
         <StatTile
           label={t.participants.share}
           value={formatMoney(balance.share, trip.currency, locale)}
+          icon={<IconReceipt className="h-4 w-4" />}
         />
         <StatTile
           label={t.participants.net}
           value={formatMoneySigned(balance.net, trip.currency, locale)}
+          icon={<IconScale className="h-4 w-4" />}
           tone={balance.net > 0 ? 'good' : balance.net < 0 ? 'bad' : 'neutral'}
           hint={
             balance.net > 0 ? t.trip.getsBack : balance.net < 0 ? t.trip.owes : t.trip.settled
@@ -142,6 +157,7 @@ export default function ParticipantDetail() {
         <StatTile
           label={t.participants.paidOutOfPocket}
           value={formatMoney(balance.paidOutOfPocket, trip.currency, locale)}
+          icon={<IconCoins className="h-4 w-4" />}
           hint={t.participants.paidOutOfPocketHint}
         />
       </div>

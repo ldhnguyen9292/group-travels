@@ -41,8 +41,10 @@ export default function Header() {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cx(
-      'rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors',
-      isActive ? 'bg-brand-soft text-brand' : 'text-ink-muted hover:bg-sunken hover:text-ink',
+      'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+      isActive
+        ? 'bg-brand-soft text-brand ring-1 ring-brand-border'
+        : 'text-ink-muted hover:bg-sunken hover:text-ink',
     );
 
   const languageSwitch = (
@@ -73,11 +75,11 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-40 border-b border-border bg-surface/85 backdrop-blur-md"
+      className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-xl"
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <img src="/group-travel-logo.svg" alt="" className="h-9 w-9" />
+          <img src="/group-travel-logo.svg" alt="" className="h-9 w-9 shadow-glow rounded-xl" />
           <span className="text-base font-semibold tracking-tight">{t.app.name}</span>
         </Link>
 
@@ -118,6 +120,9 @@ export default function Header() {
           </Button>
         </div>
       </div>
+
+      {/* Hairline of brand colour so the bar reads as part of the app, not a plain rule. */}
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/45 to-transparent" />
 
       {menuOpen && (
         <div className="border-t border-border bg-surface md:hidden">

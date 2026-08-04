@@ -5,7 +5,15 @@ import ShareDialog from '../../../components/ShareDialog';
 import TripForm from '../../../components/TripForm';
 import Button from '../../../components/ui/Button';
 import EmptyState from '../../../components/ui/EmptyState';
-import { IconAlert, IconArrowLeft, IconPencil, IconShare } from '../../../components/ui/Icons';
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconPencil,
+  IconReceipt,
+  IconShare,
+  IconUsers,
+  IconWallet,
+} from '../../../components/ui/Icons';
 import Modal from '../../../components/ui/Modal';
 import StatTile from '../../../components/ui/StatTile';
 import { btn } from '../../../components/ui/classes';
@@ -89,14 +97,21 @@ export default function ParticipantsPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <StatTile label={t.trip.members} value={String(trip.participants.length)} />
+        <StatTile
+          label={t.trip.members}
+          value={String(trip.participants.length)}
+          icon={<IconUsers className="h-4 w-4" />}
+          tone="brand"
+        />
         <StatTile
           label={t.trip.fundIn}
           value={formatMoney(totals.contributions, trip.currency, locale)}
+          icon={<IconWallet className="h-4 w-4" />}
         />
         <StatTile
           label={t.trip.spent}
           value={formatMoney(totals.expenses, trip.currency, locale)}
+          icon={<IconReceipt className="h-4 w-4" />}
         />
       </div>
 

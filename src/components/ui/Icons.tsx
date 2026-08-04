@@ -151,6 +151,36 @@ export function IconScale({ className }: IconProps) {
   );
 }
 
+export function IconCoins({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <ellipse cx="9" cy="7" rx="5.5" ry="2.5" />
+      <path d="M3.5 7v4c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5V7" />
+      <path d="M9 17.5c-3 0-5.5-1.1-5.5-2.5" />
+      <ellipse cx="15" cy="17" rx="5.5" ry="2.5" />
+      <path d="M9.5 17v-1.5" />
+    </Outline>
+  );
+}
+
+export function IconCalendar({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <rect x="3.5" y="5.5" width="17" height="15" rx="2.5" />
+      <path d="M3.5 10h17M8.5 3.5v4M15.5 3.5v4" />
+    </Outline>
+  );
+}
+
+export function IconSparkle({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <path d="M12 3.5l2 5.5 5.5 2-5.5 2-2 5.5-2-5.5L4.5 11l5.5-2 2-5.5z" />
+      <path d="M18.5 16.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z" />
+    </Outline>
+  );
+}
+
 export function IconSearch({ className }: IconProps) {
   return (
     <Outline className={className}>

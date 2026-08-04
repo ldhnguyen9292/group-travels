@@ -92,30 +92,32 @@ export default function Home() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold sm:text-3xl">{t.home.title}</h1>
-          <p className="mt-1 text-sm text-ink-muted">{t.home.subtitle}</p>
+      <section className="hero mb-6 px-5 py-6 sm:px-7 sm:py-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold sm:text-3xl">{t.home.title}</h1>
+            <p className="mt-1.5 text-sm text-ink-muted">{t.home.subtitle}</p>
+          </div>
+          <Button onClick={openCreate}>
+            <IconPlus className="h-4 w-4" />
+            {t.home.newTrip}
+          </Button>
         </div>
-        <Button onClick={openCreate}>
-          <IconPlus className="h-4 w-4" />
-          {t.home.newTrip}
-        </Button>
-      </div>
 
-      {trips.length > 0 && (
-        <div className="relative mb-6 max-w-sm">
-          <IconSearch className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="search"
-            className={input(false, 'pl-9')}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t.home.searchPlaceholder}
-            aria-label={t.common.search}
-          />
-        </div>
-      )}
+        {trips.length > 0 && (
+          <div className="relative mt-5 max-w-sm">
+            <IconSearch className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="search"
+              className={input(false, 'bg-surface pl-9')}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t.home.searchPlaceholder}
+              aria-label={t.common.search}
+            />
+          </div>
+        )}
+      </section>
 
       {trips.length === 0 ? (
         <EmptyState

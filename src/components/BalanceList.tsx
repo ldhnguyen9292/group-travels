@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n/context';
 import { formatMoney, formatMoneySigned } from '../lib/money';
 import type { ParticipantBalance, Trip } from '../types/trip';
+import Avatar from './ui/Avatar';
 import { IconChevronRight } from './ui/Icons';
 import { cx } from './ui/classes';
 
@@ -29,8 +30,9 @@ export default function BalanceList({ trip, balances }: BalanceListProps) {
           <li key={balance.participant.id}>
             <Link
               to={`/trip/${trip.id}/participants/${balance.participant.id}`}
-              className="row flex items-center gap-3 rounded-lg px-1 py-3"
+              className="row flex items-center gap-3 rounded-lg px-2 py-3"
             >
+              <Avatar name={balance.participant.name} className="h-9 w-9 text-xs" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{balance.participant.name}</p>
                 <p className="mt-0.5 text-xs text-ink-muted">

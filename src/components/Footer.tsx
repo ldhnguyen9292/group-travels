@@ -9,7 +9,7 @@ export default function Footer() {
     <footer className="mt-12 border-t border-border bg-surface">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8 text-center">
         <Link to="/" className="inline-flex items-center gap-2.5">
-          <img src="/group-travel-logo.svg" alt="" className="h-8 w-8" />
+          <img src="/group-travel-logo.svg" alt="" className="h-8 w-8 rounded-lg" />
           <span className="font-semibold">{t.app.name}</span>
         </Link>
         <p className="max-w-md text-sm leading-relaxed text-ink-muted">{t.footer.desc}</p>
