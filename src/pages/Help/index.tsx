@@ -1,8 +1,6 @@
-import Button from '../../components/ui/Button';
+import FeedbackCard from '../../components/FeedbackCard';
 import { IconChevronDown } from '../../components/ui/Icons';
 import { useI18n } from '../../i18n/context';
-
-const CONTACT_EMAIL = 'developer@example.com';
 
 export default function Help() {
   const { t } = useI18n();
@@ -33,18 +31,7 @@ export default function Help() {
         ))}
       </div>
 
-      <section className="card p-6 text-center">
-        <h2 className="text-base font-semibold">{t.help.contactTitle}</h2>
-        <Button
-          variant="soft"
-          className="mt-4"
-          onClick={() => {
-            window.location.href = `mailto:${CONTACT_EMAIL}`;
-          }}
-        >
-          {t.help.contactAction}
-        </Button>
-      </section>
+      <FeedbackCard />
     </div>
   );
 }

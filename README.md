@@ -64,8 +64,30 @@ Rules worth keeping:
 - Amounts are rounded per currency (`VND` has no decimals) and split with
   `splitEvenly`, which hands out the leftover minor units so the parts always add
   back up to the total.
+- Amounts are capped at `MAX_AMOUNT` (1e12). Above that, minor units approach
+  `Number.MAX_SAFE_INTEGER` and splits stop being exact. Forms reject larger
+  values; stored and imported data is clamped by `clampAmount`.
+- Every amount on screen carries the `.money` class. `Intl` emits a
+  non-breaking space before symbols like `₫` and digit groups offer no break
+  point, so without `overflow-wrap: anywhere` a large amount spills out of its
+  container instead of wrapping.
 
-## Known placeholder
+## Sharing results
 
-`src/pages/Help/index.tsx` still uses `developer@example.com` for the contact button.
-Replace `CONTACT_EMAIL` with the real address.
+`lib/summary.ts` builds a plain-text summary — whole trip, or one member's
+statement — which `ShareDialog` shows for review before it goes anywhere. On a
+phone the native share sheet (`navigator.share`) hands it to Zalo, Messenger,
+SMS or email; elsewhere it is copied to the clipboard, and if that is blocked
+the text is already selected for a manual copy.
+
+Nothing is uploaded: the text only travels where the user pastes it. The
+summary deliberately has no space-padded columns — chat apps render a
+proportional font, so padding misaligns instead of tidying.
+
+## Feedback
+
+Bug reports and feature ideas go to the address in `src/lib/contact.ts`
+(`repagtor@gmail.com`), surfaced by `FeedbackCard` on the Help and About pages and
+by a link in the footer. The buttons pre-fill a subject and a short template;
+the address is also shown as plain text, because `mailto:` does nothing on a
+desktop with no mail client configured.

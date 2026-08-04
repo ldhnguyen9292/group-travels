@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
+import FeedbackCard from '../../components/FeedbackCard';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { IconAlert, IconCheck, IconDownload, IconTrash, IconUpload } from '../../components/ui/Icons';
 import { useI18n } from '../../i18n/context';
+import { CONTACT_EMAIL } from '../../lib/contact';
 import { todayISO } from '../../lib/date';
 import { DATA_VERSION, parseImportedData, type AppData } from '../../lib/storage';
 import { useTripStore } from '../../store/context';
@@ -135,8 +137,16 @@ export default function About() {
       <section className="card p-6">
         <h2 className="text-base font-semibold">{t.about.developerTitle}</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.about.developerDesc}</p>
+        <p className="mt-3 text-sm text-ink-muted">
+          {t.feedback.orEmailDirectly}{' '}
+          <a className="link break-all" href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>
+        </p>
         <p className="mt-4 border-t border-border pt-4 text-xs text-ink-muted">{t.about.version}</p>
       </section>
+
+      <FeedbackCard />
 
       <ConfirmDialog
         open={pendingImport !== null}

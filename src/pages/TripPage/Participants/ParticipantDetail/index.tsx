@@ -1,13 +1,16 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ShareDialog from '../../../../components/ShareDialog';
+import Button from '../../../../components/ui/Button';
 import EmptyState from '../../../../components/ui/EmptyState';
-import { IconAlert, IconArrowLeft } from '../../../../components/ui/Icons';
+import { IconAlert, IconArrowLeft, IconShare } from '../../../../components/ui/Icons';
 import StatTile from '../../../../components/ui/StatTile';
 import { btn } from '../../../../components/ui/classes';
 import { useI18n } from '../../../../i18n/context';
 import { computeBalances, findBalance, participantShares } from '../../../../lib/balances';
 import { formatDate } from '../../../../lib/date';
 import { formatMoney, formatMoneySigned } from '../../../../lib/money';
+import { buildParticipantSummary } from '../../../../lib/summary';
 import { useTrip, useTripRecords } from '../../../../store/context';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -26,7 +29,7 @@ function MoneyRow({ label, sub, value }: { label: string; sub?: string; value: s
         <p className="truncate text-sm font-medium">{label}</p>
         {sub && <p className="text-xs text-ink-muted">{sub}</p>}
       </div>
-      <span className="font-semibold tabular-nums">{value}</span>
+      <span className="money shrink-0 font-semibold">{value}</span>
     </li>
   );
 }
@@ -36,6 +39,7 @@ export default function ParticipantDetail() {
   const { t, locale } = useI18n();
   const trip = useTrip(id);
   const { expenses, contributions } = useTripRecords(id);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const participant = useMemo(
     () => trip?.participants.find((person) => person.id === participantId) ?? null,
@@ -100,10 +104,23 @@ export default function ParticipantDetail() {
         {t.participants.backToMembers}
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-semibold sm:text-3xl">{participant.name}</h1>
-        <p className="mt-1 text-sm text-ink-muted">{trip.name}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{participant.name}</h1>
+          <p className="mt-1 text-sm text-ink-muted">{trip.name}</p>
+        </div>
+        <Button variant="secondary" onClick={() => setShareOpen(true)}>
+          <IconShare className="h-4 w-4" />
+          {t.share.shareMember}
+        </Button>
       </div>
+
+      <ShareDialog
+        open={shareOpen}
+        subject={`${trip.name} — ${participant.name}`}
+        text={buildParticipantSummary(trip, balance, ownContributions, shares, { t, locale })}
+        onClose={() => setShareOpen(false)}
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile

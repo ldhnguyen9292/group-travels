@@ -46,7 +46,7 @@ export default function ExpenseList({ trip, expenses, onEdit, onDelete }: Expens
                     </span>
                   </p>
                 </div>
-                <span className="font-semibold tabular-nums">
+                <span className="money shrink-0 font-semibold">
                   {formatMoney(expense.amount, trip.currency, locale)}
                 </span>
                 <div className="flex gap-1">
@@ -93,7 +93,7 @@ export default function ExpenseList({ trip, expenses, onEdit, onDelete }: Expens
                       <span className="min-w-0 truncate text-ink-muted">
                         {nameOf(names, split.participantId, t.common.unknown)}
                       </span>
-                      <span className="tabular-nums">
+                      <span className="money">
                         {formatMoney(split.amount, trip.currency, locale)}
                       </span>
                     </li>

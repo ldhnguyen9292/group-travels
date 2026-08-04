@@ -2,9 +2,12 @@ import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useI18n } from '../i18n/context';
 import { normaliseDate, todayISO } from '../lib/date';
 import {
+  MAX_AMOUNT,
   currencyStep,
   formatMoney,
   parseAmount,
+  readAmount,
+  readOptionalAmount,
   roundMoney,
   splitEvenly,
   toMinorUnits,
@@ -58,7 +61,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
   const total = parseAmount(amount) ?? 0;
   const equalParts = splitEvenly(total, attendeeIds.length, trip.currency);
   const allocated = roundMoney(
-    attendeeIds.reduce((sum, id) => sum + (Number(customAmounts[id]) || 0), 0),
+    attendeeIds.reduce((sum, id) => sum + (readOptionalAmount(customAmounts[id]) ?? 0), 0),
     trip.currency,
   );
   const difference = roundMoney(total - allocated, trip.currency);
@@ -87,38 +90,49 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const parsedAmount = parseAmount(amount);
+    const parsed = readAmount(amount);
+    const tooLarge = `${t.common.amountTooLarge} ${formatMoney(MAX_AMOUNT, trip.currency, locale)}`;
     const next: Errors = {};
 
     if (!description.trim()) next.description = t.expense.errorDescription;
-    if (parsedAmount === null) next.amount = t.expense.errorAmount;
+    if (!parsed.ok) {
+      next.amount = parsed.reason === 'too-large' ? tooLarge : t.expense.errorAmount;
+    }
     if (!memberIds.includes(paidById)) next.paidById = t.expense.errorPaidBy;
     if (attendeeIds.length === 0) next.attendees = t.expense.errorAttendees;
 
     let splits: ExpenseSplit[] = [];
-    if (parsedAmount !== null && attendeeIds.length > 0) {
+    if (parsed.ok && attendeeIds.length > 0) {
       if (splitType === 'equal') {
-        const parts = splitEvenly(parsedAmount, attendeeIds.length, trip.currency);
+        const parts = splitEvenly(parsed.value, attendeeIds.length, trip.currency);
         splits = attendeeIds.map((id, index) => ({ participantId: id, amount: parts[index] }));
       } else {
-        splits = attendeeIds.map((id) => ({
-          participantId: id,
-          amount: roundMoney(Number(customAmounts[id]) || 0, trip.currency),
-        }));
-        const sum = splits.reduce((acc, split) => acc + toMinorUnits(split.amount, trip.currency), 0);
-        if (sum !== toMinorUnits(parsedAmount, trip.currency)) {
-          next.splits = t.expense.errorSplitSum;
+        const amounts = attendeeIds.map((id) => readOptionalAmount(customAmounts[id]));
+        if (amounts.some((value) => value === null)) {
+          next.splits = tooLarge;
+        } else {
+          splits = attendeeIds.map((id, index) => ({
+            participantId: id,
+            amount: roundMoney(amounts[index] ?? 0, trip.currency),
+          }));
+          const sum = splits.reduce(
+            (acc, split) => acc + toMinorUnits(split.amount, trip.currency),
+            0,
+          );
+          if (sum !== toMinorUnits(parsed.value, trip.currency)) {
+            next.splits = t.expense.errorSplitSum;
+          }
         }
       }
     }
 
     setErrors(next);
-    if (parsedAmount === null || Object.values(next).some(Boolean)) return;
+    if (!parsed.ok || Object.values(next).some(Boolean)) return;
 
     onSubmit(
       {
         description: description.trim(),
-        amount: roundMoney(parsedAmount, trip.currency),
+        amount: roundMoney(parsed.value, trip.currency),
         paidById,
         splits,
         splitType,
@@ -153,6 +167,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
             type="number"
             inputMode="decimal"
             min="0"
+            max={MAX_AMOUNT}
             step={currencyStep(trip.currency)}
             className={input(Boolean(errors.amount))}
             value={amount}
@@ -313,6 +328,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
                     type="number"
                     inputMode="decimal"
                     min="0"
+                    max={MAX_AMOUNT}
                     step={currencyStep(trip.currency)}
                     className={input(false, 'w-32 bg-surface')}
                     value={customAmounts[id] ?? ''}

@@ -5,6 +5,7 @@ import ContributionForm from '../../components/ContributionForm';
 import ContributionList from '../../components/ContributionList';
 import ExpenseForm from '../../components/ExpenseForm';
 import ExpenseList from '../../components/ExpenseList';
+import ShareDialog from '../../components/ShareDialog';
 import TripForm from '../../components/TripForm';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -16,6 +17,7 @@ import {
   IconPlus,
   IconReceipt,
   IconScale,
+  IconShare,
   IconUsers,
   IconWallet,
 } from '../../components/ui/Icons';
@@ -26,6 +28,7 @@ import { useI18n } from '../../i18n/context';
 import { computeBalances, computeTotals } from '../../lib/balances';
 import { formatDateRange } from '../../lib/date';
 import { formatMoney } from '../../lib/money';
+import { buildTripSummary } from '../../lib/summary';
 import { useLockedParticipantIds, useTrip, useTripRecords, useTripStore } from '../../store/context';
 import type {
   Contribution,
@@ -36,7 +39,7 @@ import type {
   TripDraft,
 } from '../../types/trip';
 
-type ActiveModal = 'trip' | 'contribution' | 'expense' | null;
+type ActiveModal = 'trip' | 'contribution' | 'expense' | 'share' | null;
 
 type PendingDelete = { kind: 'contribution' | 'expense'; id: ID } | null;
 
@@ -159,6 +162,10 @@ export default function TripPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setActiveModal('share')}>
+            <IconShare className="h-4 w-4" />
+            {t.share.shareResults}
+          </Button>
           <Link to={`/trip/${trip.id}/participants`} className={btn('secondary')}>
             <IconUsers className="h-4 w-4" />
             {t.trip.allMembers}
@@ -306,6 +313,13 @@ export default function TripPage() {
           onCancel={closeModal}
         />
       </Modal>
+
+      <ShareDialog
+        open={activeModal === 'share'}
+        subject={trip.name}
+        text={buildTripSummary(trip, totals, balances, { t, locale })}
+        onClose={closeModal}
+      />
 
       <ConfirmDialog
         open={pendingDelete !== null}

@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import { useI18n } from '../i18n/context';
 import { normaliseDate, todayISO } from '../lib/date';
-import { currencyStep, parseAmount, roundMoney } from '../lib/money';
+import { MAX_AMOUNT, currencyStep, formatMoney, readAmount, roundMoney } from '../lib/money';
 import type { Contribution, ContributionDraft, Trip } from '../types/trip';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -26,7 +26,7 @@ export default function ContributionForm({
   onSubmit,
   onCancel,
 }: ContributionFormProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const fieldId = useId();
 
   const [participantId, setParticipantId] = useState(contribution?.participantId ?? '');
@@ -36,19 +36,24 @@ export default function ContributionForm({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const parsedAmount = parseAmount(amount);
+    const parsed = readAmount(amount);
     const next: Errors = {};
 
     if (!trip.participants.some((person) => person.id === participantId)) {
       next.participantId = t.contribution.errorMember;
     }
-    if (parsedAmount === null) next.amount = t.contribution.errorAmount;
+    if (!parsed.ok) {
+      next.amount =
+        parsed.reason === 'too-large'
+          ? `${t.common.amountTooLarge} ${formatMoney(MAX_AMOUNT, trip.currency, locale)}`
+          : t.contribution.errorAmount;
+    }
     if (!date) next.date = t.contribution.errorDate;
 
     setErrors(next);
-    if (parsedAmount === null || Object.values(next).some(Boolean)) return;
+    if (!parsed.ok || Object.values(next).some(Boolean)) return;
 
-    onSubmit({ participantId, amount: roundMoney(parsedAmount, trip.currency), date });
+    onSubmit({ participantId, amount: roundMoney(parsed.value, trip.currency), date });
   }
 
   return (
@@ -84,6 +89,7 @@ export default function ContributionForm({
             type="number"
             inputMode="decimal"
             min="0"
+            max={MAX_AMOUNT}
             step={currencyStep(trip.currency)}
             className={input(Boolean(errors.amount))}
             value={amount}

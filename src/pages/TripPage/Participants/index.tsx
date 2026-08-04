@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import BalanceList from '../../../components/BalanceList';
+import ShareDialog from '../../../components/ShareDialog';
 import TripForm from '../../../components/TripForm';
 import Button from '../../../components/ui/Button';
 import EmptyState from '../../../components/ui/EmptyState';
-import { IconAlert, IconArrowLeft, IconPencil } from '../../../components/ui/Icons';
+import { IconAlert, IconArrowLeft, IconPencil, IconShare } from '../../../components/ui/Icons';
 import Modal from '../../../components/ui/Modal';
 import StatTile from '../../../components/ui/StatTile';
 import { btn } from '../../../components/ui/classes';
 import { useI18n } from '../../../i18n/context';
 import { computeBalances, computeTotals } from '../../../lib/balances';
 import { formatMoney } from '../../../lib/money';
+import { buildTripSummary } from '../../../lib/summary';
 import {
   useLockedParticipantIds,
   useTrip,
@@ -27,6 +29,7 @@ export default function ParticipantsPage() {
   const lockedIds = useLockedParticipantIds(id);
   const { updateTrip } = useTripStore();
   const [formOpen, setFormOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const balances = useMemo(
     () => (trip ? computeBalances(trip, expenses, contributions) : []),
@@ -73,10 +76,16 @@ export default function ParticipantsPage() {
           <h1 className="text-2xl font-semibold sm:text-3xl">{t.participants.title}</h1>
           <p className="mt-1 text-sm text-ink-muted">{t.participants.subtitle}</p>
         </div>
-        <Button variant="secondary" onClick={() => setFormOpen(true)}>
-          <IconPencil className="h-4 w-4" />
-          {t.trip.editTrip}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setShareOpen(true)}>
+            <IconShare className="h-4 w-4" />
+            {t.share.shareResults}
+          </Button>
+          <Button variant="secondary" onClick={() => setFormOpen(true)}>
+            <IconPencil className="h-4 w-4" />
+            {t.trip.editTrip}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -98,6 +107,13 @@ export default function ParticipantsPage() {
           <BalanceList trip={trip} balances={balances} />
         )}
       </section>
+
+      <ShareDialog
+        open={shareOpen}
+        subject={trip.name}
+        text={buildTripSummary(trip, totals, balances, { t, locale })}
+        onClose={() => setShareOpen(false)}
+      />
 
       <Modal open={formOpen} title={t.tripForm.editTitle} onClose={() => setFormOpen(false)}>
         <TripForm

@@ -42,7 +42,7 @@ export default function BalanceList({ trip, balances }: BalanceListProps) {
               <div className="text-right">
                 <p
                   className={cx(
-                    'font-semibold tabular-nums',
+                    'money font-semibold',
                     balance.net > 0 ? 'text-good' : balance.net < 0 ? 'text-bad' : 'text-ink-muted',
                   )}
                 >

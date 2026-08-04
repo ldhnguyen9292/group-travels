@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n/context';
+import { mailtoLink } from '../lib/contact';
 
 export default function Footer() {
   const { t } = useI18n();
@@ -12,6 +13,12 @@ export default function Footer() {
           <span className="font-semibold">{t.app.name}</span>
         </Link>
         <p className="max-w-md text-sm leading-relaxed text-ink-muted">{t.footer.desc}</p>
+        <a
+          className="link text-sm"
+          href={mailtoLink(t.feedback.subjectFeature, t.feedback.featureTemplate)}
+        >
+          {t.feedback.action}
+        </a>
         <p className="text-xs text-ink-muted">
           © {new Date().getFullYear()} {t.app.name}. {t.footer.copyright}
         </p>

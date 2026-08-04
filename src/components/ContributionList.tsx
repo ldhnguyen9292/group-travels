@@ -39,7 +39,7 @@ export default function ContributionList({
               </p>
               <p className="text-xs text-ink-muted">{formatDate(contribution.date, locale)}</p>
             </div>
-            <span className="font-semibold tabular-nums text-good">
+            <span className="money shrink-0 font-semibold text-good">
               {formatMoney(contribution.amount, trip.currency, locale)}
             </span>
             <div className="flex gap-1">

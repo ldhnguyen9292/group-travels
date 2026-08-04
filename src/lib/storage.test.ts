@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_AMOUNT } from './money';
 import { normaliseAppData, parseImportedData } from './storage';
 
 const validTrip = {
@@ -92,6 +93,32 @@ describe('normaliseAppData', () => {
       ],
     });
     expect(data?.contributions[0].amount).toBe(0);
+  });
+
+  it('clamps amounts too large to add up exactly', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      contributions: [
+        { id: 'c1', tripId: 'trip-1', participantId: 'a', amount: 1e21, date: '2025-10-24' },
+        { id: 'c2', tripId: 'trip-1', participantId: 'a', amount: -50, date: '2025-10-24' },
+      ],
+      expenses: [
+        {
+          id: 'e1',
+          tripId: 'trip-1',
+          description: 'Huge',
+          amount: 1e30,
+          paidById: 'a',
+          splits: [{ participantId: 'a', amount: 1e30 }],
+          splitType: 'equal',
+          date: '2025-10-24',
+        },
+      ],
+    });
+    expect(data?.contributions[0].amount).toBe(MAX_AMOUNT);
+    expect(data?.contributions[1].amount).toBe(0);
+    expect(data?.expenses[0].amount).toBe(MAX_AMOUNT);
+    expect(data?.expenses[0].splits[0].amount).toBe(MAX_AMOUNT);
   });
 });
 
