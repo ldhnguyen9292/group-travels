@@ -1,8 +1,8 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useI18n } from '../i18n/context';
 import { isBefore } from '../lib/date';
 import { createId } from '../lib/id';
-import { CURRENCIES, DEFAULT_CURRENCY } from '../lib/money';
+import { CURRENCIES, currencyLabel, defaultCurrencyForLang } from '../lib/money';
 import type { CurrencyCode, ID, Participant, Trip, TripDraft } from '../types/trip';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -33,16 +33,25 @@ export default function TripForm({
   onSubmit,
   onCancel,
 }: TripFormProps) {
-  const { t } = useI18n();
+  const { t, lang, locale } = useI18n();
   const fieldId = useId();
 
   const [name, setName] = useState(trip?.name ?? '');
-  const [currency, setCurrency] = useState<CurrencyCode>(trip?.currency ?? DEFAULT_CURRENCY);
+  const [currency, setCurrency] = useState<CurrencyCode>(
+    trip?.currency ?? defaultCurrencyForLang(lang),
+  );
   const [startDate, setStartDate] = useState(trip?.startDate ?? '');
   const [endDate, setEndDate] = useState(trip?.endDate ?? '');
   const [participants, setParticipants] = useState<Participant[]>(trip?.participants ?? []);
   const [draftNames, setDraftNames] = useState('');
   const [errors, setErrors] = useState<Errors>({});
+
+  /** The language's own currency leads the list; names follow the reader's locale. */
+  const currencyOptions = useMemo(() => {
+    const home = defaultCurrencyForLang(lang);
+    const ordered = [home, ...CURRENCIES.filter((code) => code !== home)];
+    return ordered.map((code) => ({ code, label: currencyLabel(code, locale) }));
+  }, [lang, locale]);
 
   function addFromInput() {
     const names = draftNames
@@ -126,16 +135,20 @@ export default function TripForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field id={`${fieldId}-currency`} label={t.tripForm.currency}>
+        <Field
+          id={`${fieldId}-currency`}
+          label={t.tripForm.currency}
+          hint={trip && currency !== trip.currency ? t.tripForm.currencyChangeHint : undefined}
+        >
           <select
             id={`${fieldId}-currency`}
             className={input()}
             value={currency}
             onChange={(event) => setCurrency(event.target.value as CurrencyCode)}
           >
-            {CURRENCIES.map((code) => (
+            {currencyOptions.map(({ code, label }) => (
               <option key={code} value={code}>
-                {code}
+                {label}
               </option>
             ))}
           </select>

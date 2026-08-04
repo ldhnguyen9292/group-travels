@@ -1,6 +1,26 @@
 export type ID = string;
 
-export type CurrencyCode = 'VND' | 'USD' | 'EUR' | 'JPY' | 'THB';
+export type CurrencyCode =
+  | 'VND'
+  | 'USD'
+  | 'EUR'
+  | 'GBP'
+  | 'JPY'
+  | 'KRW'
+  | 'CNY'
+  | 'TWD'
+  | 'HKD'
+  | 'SGD'
+  | 'THB'
+  | 'MYR'
+  | 'IDR'
+  | 'PHP'
+  | 'INR'
+  | 'AUD'
+  | 'NZD'
+  | 'CAD'
+  | 'CHF'
+  | 'AED';
 
 export type SplitType = 'equal' | 'custom';
 

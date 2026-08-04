@@ -1,13 +1,102 @@
+import type { Lang } from '../i18n/dictionary';
 import type { CurrencyCode } from '../types/trip';
 
-export const CURRENCIES: CurrencyCode[] = ['VND', 'USD', 'EUR', 'JPY', 'THB'];
+/** Home currency first, then the destinations a trip from Vietnam usually goes to. */
+export const CURRENCIES: CurrencyCode[] = [
+  'VND',
+  'USD',
+  'EUR',
+  'GBP',
+  'JPY',
+  'KRW',
+  'CNY',
+  'TWD',
+  'HKD',
+  'SGD',
+  'THB',
+  'MYR',
+  'IDR',
+  'PHP',
+  'INR',
+  'AUD',
+  'NZD',
+  'CAD',
+  'CHF',
+  'AED',
+];
 
+/**
+ * Fallback for data that never had a currency: the app started out
+ * Vietnamese-only, so untagged trips are đồng.
+ */
 export const DEFAULT_CURRENCY: CurrencyCode = 'VND';
 
-const DECIMALS: Record<CurrencyCode, number> = { VND: 0, JPY: 0, USD: 2, EUR: 2, THB: 2 };
+/** What a *new* trip starts with, following the interface language. */
+const CURRENCY_BY_LANG: Record<Lang, CurrencyCode> = { en: 'USD', vn: 'VND' };
+
+export function defaultCurrencyForLang(lang: Lang): CurrencyCode {
+  return CURRENCY_BY_LANG[lang] ?? DEFAULT_CURRENCY;
+}
+
+/**
+ * Minor units per currency. Mostly ISO 4217, except IDR: rupiah are quoted and
+ * split in whole units in practice, and cents would only add noise.
+ */
+const DECIMALS: Record<CurrencyCode, number> = {
+  VND: 0,
+  JPY: 0,
+  KRW: 0,
+  IDR: 0,
+  USD: 2,
+  EUR: 2,
+  GBP: 2,
+  CNY: 2,
+  TWD: 2,
+  HKD: 2,
+  SGD: 2,
+  THB: 2,
+  MYR: 2,
+  PHP: 2,
+  INR: 2,
+  AUD: 2,
+  NZD: 2,
+  CAD: 2,
+  CHF: 2,
+  AED: 2,
+};
 
 export function isCurrency(value: unknown): value is CurrencyCode {
   return typeof value === 'string' && (CURRENCIES as string[]).includes(value);
+}
+
+/**
+ * The symbol this locale actually prints for the currency: "₫", "A$", or the
+ * bare code where the locale has no symbol ("THB" in en-US). Deliberately the
+ * same `currencyDisplay` formatMoney uses, so a picker label and the amounts on
+ * screen never disagree.
+ */
+export function currencySymbol(currency: CurrencyCode, locale: string): string {
+  try {
+    const parts = new Intl.NumberFormat(locale, { style: 'currency', currency }).formatToParts(0);
+    return parts.find((part) => part.type === 'currency')?.value ?? currency;
+  } catch {
+    return currency;
+  }
+}
+
+/** Picker label in the reader's own language: "VND — Vietnamese Dong (₫)". */
+export function currencyLabel(currency: CurrencyCode, locale: string): string {
+  let name = '';
+  try {
+    name = new Intl.DisplayNames([locale], { type: 'currency' }).of(currency) ?? '';
+  } catch {
+    name = '';
+  }
+  const symbol = currencySymbol(currency, locale);
+  const parts: string[] = [currency];
+  if (name && name.toUpperCase() !== currency) parts.push(`— ${name}`);
+  if (symbol !== currency) parts.push(`(${symbol})`);
+  return parts.join(' ');
 }
 
 export function currencyDecimals(currency: CurrencyCode): number {

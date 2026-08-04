@@ -70,6 +70,8 @@ const en = {
     name: 'Trip name',
     namePlaceholder: 'Da Nang weekend',
     currency: 'Currency',
+    /** Shown when an existing trip's currency is switched: nothing is converted. */
+    currencyChangeHint: 'Amounts already logged keep their numbers — they are not converted.',
     startDate: 'Start date',
     endDate: 'End date',
     members: 'Members',
@@ -334,6 +336,7 @@ const vn: Dictionary = {
     name: 'Tên chuyến đi',
     namePlaceholder: 'Đà Nẵng cuối tuần',
     currency: 'Tiền tệ',
+    currencyChangeHint: 'Số tiền đã ghi vẫn giữ nguyên con số — không được quy đổi.',
     startDate: 'Ngày bắt đầu',
     endDate: 'Ngày kết thúc',
     members: 'Thành viên',

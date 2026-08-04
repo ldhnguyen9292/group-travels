@@ -4,6 +4,11 @@ import {
   MAX_AMOUNT,
   clampAmount,
   currencyDecimals,
+  currencyLabel,
+  currencySymbol,
+  defaultCurrencyForLang,
+  formatMoney,
+  isCurrency,
   parseAmount,
   readAmount,
   readOptionalAmount,
@@ -28,6 +33,36 @@ describe('splitEvenly', () => {
   it('handles an even split and an empty group', () => {
     expect(splitEvenly(120, 4, 'USD')).toEqual([30, 30, 30, 30]);
     expect(splitEvenly(120, 0, 'USD')).toEqual([]);
+  });
+});
+
+describe('currency list', () => {
+  it('has a decimal count and a unique entry for every supported code', () => {
+    expect(new Set(CURRENCIES).size).toBe(CURRENCIES.length);
+    for (const currency of CURRENCIES) {
+      expect(isCurrency(currency)).toBe(true);
+      expect([0, 2]).toContain(currencyDecimals(currency));
+    }
+  });
+
+  it('starts a new trip in the currency of the chosen language', () => {
+    expect(defaultCurrencyForLang('vn')).toBe('VND');
+    expect(defaultCurrencyForLang('en')).toBe('USD');
+  });
+
+  it('labels an option with its code, localised name and symbol', () => {
+    expect(currencyLabel('VND', 'en-US')).toBe('VND — Vietnamese Dong (₫)');
+    expect(currencyLabel('USD', 'en-US')).toBe('USD — US Dollar ($)');
+    // Vietnamese reader, foreign currency: the name is translated.
+    expect(currencyLabel('JPY', 'vi-VN')).toContain('JPY —');
+  });
+
+  it('shows the symbol the amounts on screen will actually use', () => {
+    for (const currency of CURRENCIES) {
+      for (const locale of ['en-US', 'vi-VN']) {
+        expect(formatMoney(1, currency, locale)).toContain(currencySymbol(currency, locale));
+      }
+    }
   });
 });
 
