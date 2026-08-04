@@ -1,5 +1,9 @@
 export type ID = string;
 
+export type CurrencyCode = 'VND' | 'USD' | 'EUR' | 'JPY' | 'THB';
+
+export type SplitType = 'equal' | 'custom';
+
 export interface Participant {
   id: ID;
   name: string;
@@ -7,65 +11,72 @@ export interface Participant {
 
 export interface Trip {
   id: ID;
-  userDevice: string;
   name: string;
+  currency: CurrencyCode;
+  /** ISO date (yyyy-mm-dd), optional. */
   startDate?: string;
+  /** ISO date (yyyy-mm-dd), optional. */
   endDate?: string;
   participants: Participant[];
   createdAt: string;
   updatedAt: string;
 }
 
+/** One person's share of an expense. References a participant by id only. */
+export interface ExpenseSplit {
+  participantId: ID;
+  amount: number;
+}
+
+/** Money spent for the group, split between the attendees. */
 export interface Expense {
   id: ID;
   tripId: ID;
   description: string;
-  amount: number; // tổng tiền
-  paidBy: Participant; // người chi trả
-  splits: ExpenseSplit[]; // chi tiết chia cho từng người
-  splitType: 'equal' | 'custom'; // chia đều hay chia riêng
+  amount: number;
+  /** Who physically paid. */
+  paidById: ID;
+  splits: ExpenseSplit[];
+  splitType: SplitType;
+  /** ISO date (yyyy-mm-dd). */
   date: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ExpenseSplit {
-  participant: Participant;
-  amount: number;
-}
-
-export interface Settlement {
-  id: ID;
-  tripId: ID;
-  from: Participant;
-  to: Participant;
-  amount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface TripDetails extends Trip {
-  expenses: Expense[];
-  settlements: Settlement[];
-  contributions: Contribution[];
-}
-
-export interface TripFinanceSummary {
-  totalContributions: number;
-  totalExpenses: number;
-  remainingBalance: number;
-}
-
-export interface ExpenseSummary extends Expense {
-  paidByName: string;
-}
-
+/** Money a participant put into the shared fund. */
 export interface Contribution {
   id: ID;
   tripId: ID;
-  participant: Participant;
+  participantId: ID;
   amount: number;
-  date: string; // Ngày thu tiền
+  /** ISO date (yyyy-mm-dd). */
+  date: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type TripDraft = Pick<Trip, 'name' | 'currency' | 'startDate' | 'endDate' | 'participants'>;
+
+export type ExpenseDraft = Omit<Expense, 'id' | 'tripId' | 'createdAt' | 'updatedAt'>;
+
+export type ContributionDraft = Omit<Contribution, 'id' | 'tripId' | 'createdAt' | 'updatedAt'>;
+
+export interface TripTotals {
+  contributions: number;
+  expenses: number;
+  /** contributions - expenses: what is left in the shared fund. */
+  remaining: number;
+}
+
+export interface ParticipantBalance {
+  participant: Participant;
+  /** Paid into the shared fund. */
+  contributed: number;
+  /** Share of the group's expenses. */
+  share: number;
+  /** Expenses this participant physically paid for (bookkeeping only). */
+  paidOutOfPocket: number;
+  /** contributed - share. Positive: gets money back. Negative: still owes. */
+  net: number;
 }

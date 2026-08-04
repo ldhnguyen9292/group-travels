@@ -1,133 +1,178 @@
-import React, { useEffect, useState } from 'react';
-import Loading from '../../components/Loading';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import TripCard from '../../components/TripCard';
 import TripForm from '../../components/TripForm';
-import TripList from '../../components/TripList';
-import useTrips from '../../hooks/useTrips';
-import type { Trip } from '../../types/trip';
-import { getOrCreateDeviceId } from '../../utils/device';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import EmptyState from '../../components/ui/EmptyState';
+import { IconPlus, IconSearch, IconWallet } from '../../components/ui/Icons';
+import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/ui/Pagination';
+import { input } from '../../components/ui/classes';
+import { usePagination } from '../../hooks/usePagination';
+import { useI18n } from '../../i18n/context';
+import { useLockedParticipantIds, useTripStore } from '../../store/context';
+import type { ID, Trip, TripDraft } from '../../types/trip';
 
-const translations = {
-  en: {
-    trips: 'Trips',
-    noTrips: 'You have no trips yet',
-    create: 'Create new trip',
-    edit: 'Edit',
-    remove: 'Remove',
-    prev: 'Prev',
-    next: 'Next',
-    page: 'Page',
-    of: 'of',
-  },
-  vn: {
-    trips: 'Chuyến đi',
-    noTrips: 'Chưa có chuyến đi nào.',
-    create: 'Tạo chuyến đi mới',
-    edit: 'Sửa',
-    remove: 'Xóa',
-    prev: 'Trước',
-    next: 'Sau',
-    page: 'Trang',
-    of: 'trên',
-  },
-};
+const PAGE_SIZE = 9;
 
-const PAGE_SIZE = 20;
-const Home: React.FC = () => {
-  const { trips, addTrip, deleteTrip, updateTrip, loading } = useTrips();
-  const [lang, setLang] = useState('en');
-  const [editTrip, setEditTrip] = useState<Trip | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [page, setPage] = useState(1);
+interface Totals {
+  contributions: number;
+  expenses: number;
+}
 
-  const totalPages = trips && trips.length ? Math.ceil(trips.length / PAGE_SIZE) : 1;
-  const paginatedTrips = trips && trips.length ? trips.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : [];
+export default function Home() {
+  const { t } = useI18n();
+  const { trips, expenses, contributions, createTrip, updateTrip, deleteTrip } = useTripStore();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Ensure device ID is set
-    getOrCreateDeviceId();
-    const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
-    window.addEventListener('app:language-changed', handler as EventListener);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler as EventListener);
-  }, []);
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+  const [query, setQuery] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Trip | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Trip | null>(null);
+  const lockedIds = useLockedParticipantIds(editing?.id);
 
-  const handleAdd = (data: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>) => {
-    addTrip(data);
-    setShowForm(false);
-  };
-  const handleEdit = (trip: Trip) => {
-    setEditTrip(trip);
-    setShowForm(true);
-  };
-  const handleUpdate = (data: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editTrip) {
-      updateTrip(editTrip.id, data);
-      setEditTrip(null);
-      setShowForm(false);
+  const totalsByTrip = useMemo(() => {
+    const map = new Map<ID, Totals>();
+    const entry = (tripId: ID): Totals => {
+      const existing = map.get(tripId);
+      if (existing) return existing;
+      const created = { contributions: 0, expenses: 0 };
+      map.set(tripId, created);
+      return created;
+    };
+    for (const contribution of contributions) entry(contribution.tripId).contributions += contribution.amount;
+    for (const expense of expenses) entry(expense.tripId).expenses += expense.amount;
+    return map;
+  }, [contributions, expenses]);
+
+  const filtered = useMemo(() => {
+    const sorted = [...trips].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const needle = query.trim().toLocaleLowerCase();
+    if (!needle) return sorted;
+    return sorted.filter(
+      (trip) =>
+        trip.name.toLocaleLowerCase().includes(needle) ||
+        trip.participants.some((person) => person.name.toLocaleLowerCase().includes(needle)),
+    );
+  }, [trips, query]);
+
+  const { page, totalPages, items, setPage } = usePagination(filtered, PAGE_SIZE);
+
+  function openCreate() {
+    setEditing(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(trip: Trip) {
+    setEditing(trip);
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setEditing(null);
+  }
+
+  function handleSubmit(draft: TripDraft) {
+    if (editing) {
+      updateTrip(editing.id, draft);
+      closeForm();
+      return;
     }
-  };
-  const handleCancel = () => {
-    setEditTrip(null);
-    setShowForm(false);
-  };
+    const trip = createTrip(draft);
+    closeForm();
+    navigate(`/trip/${trip.id}`);
+  }
+
+  function confirmDelete() {
+    if (pendingDelete) deleteTrip(pendingDelete.id);
+    setPendingDelete(null);
+  }
 
   return (
-    <main className="min-h-[60vh] py-8">
-      <section className="max-w-3xl mx-auto bg-card rounded-2xl shadow-lg bg-surface border border-surface p-6">
-        <h2 className="text-3xl font-semibold mb-4 text-center">{t.trips}</h2>
-        {loading && <Loading />}
-        {!loading && (
-          <>
-            {!showForm && (
-              <div className="flex justify-center mb-6">
-                <button
-                  className="px-4 py-2 rounded bg-primary text-on-primary hover:bg-primary-dark"
-                  onClick={() => setShowForm(true)}
-                >
-                  {t.create}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-        {!loading && showForm && (
-          <div className="mb-6">
-            <TripForm
-              onAdd={editTrip ? handleUpdate : handleAdd}
-              initialData={editTrip || undefined}
-              onCancel={handleCancel}
-            />
-          </div>
-        )}
-        {!loading && trips.length === 0 && !showForm && <p>{t.noTrips}</p>}
-        {!loading && trips.length > 0 && (
-          <>
-            <TripList trips={paginatedTrips} onDelete={deleteTrip} onEdit={handleEdit} />
-            <div className="flex justify-center items-center gap-2 mt-4">
-              <button
-                className="px-2 py-1 rounded bg-primary hover:bg-primary-dark disabled:opacity-50 font-semibold mb-2 text-on-primary"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                {t.prev}
-              </button>
-              <span className="mx-2 font-semibold mb-2">
-                {t.page} {page} {t.of} {totalPages}
-              </span>
-              <button
-                className="px-2 py-1 rounded bg-primary hover:bg-primary-dark disabled:opacity-50 font-semibold mb-2 text-on-primary"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                {t.next}
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-    </main>
-  );
-};
+    <div>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold sm:text-3xl">{t.home.title}</h1>
+          <p className="mt-1 text-sm text-ink-muted">{t.home.subtitle}</p>
+        </div>
+        <Button onClick={openCreate}>
+          <IconPlus className="h-4 w-4" />
+          {t.home.newTrip}
+        </Button>
+      </div>
 
-export default Home;
+      {trips.length > 0 && (
+        <div className="relative mb-6 max-w-sm">
+          <IconSearch className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <input
+            type="search"
+            className={input(false, 'pl-9')}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t.home.searchPlaceholder}
+            aria-label={t.common.search}
+          />
+        </div>
+      )}
+
+      {trips.length === 0 ? (
+        <EmptyState
+          icon={<IconWallet className="h-5 w-5" />}
+          title={t.home.empty}
+          description={t.home.emptyHint}
+          action={
+            <Button onClick={openCreate}>
+              <IconPlus className="h-4 w-4" />
+              {t.home.createFirst}
+            </Button>
+          }
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState title={t.home.noResults} compact />
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((trip) => {
+              const totals = totalsByTrip.get(trip.id);
+              return (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  contributionsTotal={totals?.contributions ?? 0}
+                  expensesTotal={totals?.expenses ?? 0}
+                  onEdit={openEdit}
+                  onDelete={setPendingDelete}
+                />
+              );
+            })}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
+      )}
+
+      <Modal
+        open={formOpen}
+        title={editing ? t.tripForm.editTitle : t.tripForm.createTitle}
+        onClose={closeForm}
+      >
+        <TripForm
+          key={editing?.id ?? 'new'}
+          trip={editing}
+          lockedParticipantIds={editing ? lockedIds : undefined}
+          onSubmit={handleSubmit}
+          onCancel={closeForm}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t.home.deleteTitle}
+        body={t.home.deleteBody}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </div>
+  );
+}

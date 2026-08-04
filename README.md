@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Group Travel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small, offline-first web app for tracking who paid what on a group trip and working out
+who owes whom at the end. No account, no server, no ads. Available in English and
+Vietnamese, with light and dark themes.
 
-Currently, two official plugins are available:
+## How the money works
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Each trip has one **shared fund**:
 
-## React Compiler
+- **Money in** (`Contribution`) — cash a member hands to the fund.
+- **Expense** — money the group spends, split between the members it was for
+  (equally, or with custom amounts). It also records who physically paid.
+- **Balance** — `paid in − their share of the spending`.
+  Positive means the fund owes them money back, negative means they still owe.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The nets always add up to what is left in the fund, which is asserted in
+`src/lib/balances.test.ts`.
 
-## Expanding the ESLint configuration
+When someone pays with their own cash instead of the fund, tick *"Count this as money
+the payer put in"* on the expense form — that writes the expense and their contribution
+in one step.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Where the data lives
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+Everything is kept in `localStorage` under the single key `group-travel:v2`, on the
+user's own device. Nothing is uploaded and nothing is shared. The About page has
+**Export backup** / **Restore backup** (a JSON file the user keeps) and **Delete all
+data**.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Data from the earlier version (per-trip `expenses<id>` / `contributions<id>` keys) is
+migrated on first load; those trips lived on a remote endpoint, so a local trip is
+rebuilt from the member names found in the records and the legacy keys are then removed.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+## Scripts
+
+```bash
+npm run dev        # dev server
+npm run build      # type-check + production build
+npm run preview    # serve the production build
+npm run lint       # eslint
+npm test           # vitest (pure logic: money, dates, balances, storage)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Layout
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
 ```
+src/
+  lib/           pure logic, no React: money maths, dates, balances, storage + migration
+  types/trip.ts  the data model
+  store/         one TripStoreProvider holds all trips/expenses/contributions and persists them
+  i18n/          dictionary (en + vn) and the language context
+  theme/         light/dark context, applied via data-theme on <html>
+  components/ui/ design-system pieces: Button, Modal, Field, StatTile, Pagination…
+  components/    feature pieces: forms, lists, header, footer
+  pages/         Home, TripPage, Participants, ParticipantDetail, About, Help
+  index.css      design tokens (@theme) + dark overrides + component classes
+```
+
+Rules worth keeping:
+
+- Colours only ever come from the tokens in `index.css` — never a raw hex in a component.
+- `lib/` stays free of React so it can be unit-tested directly.
+- Amounts are rounded per currency (`VND` has no decimals) and split with
+  `splitEvenly`, which hands out the leftover minor units so the parts always add
+  back up to the total.
+
+## Known placeholder
+
+`src/pages/Help/index.tsx` still uses `developer@example.com` for the contact button.
+Replace `CONTACT_EMAIL` with the real address.

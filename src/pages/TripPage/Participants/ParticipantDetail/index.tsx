@@ -1,163 +1,183 @@
-import React from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import Loading from '../../../../components/Loading';
-import useContributions from '../../../../hooks/useContributions';
-import useExpenses from '../../../../hooks/useExpenses';
-import useTrips from '../../../../hooks/useTrips';
-import type { ExpenseSplit } from '../../../../types/trip';
+import EmptyState from '../../../../components/ui/EmptyState';
+import { IconAlert, IconArrowLeft } from '../../../../components/ui/Icons';
+import StatTile from '../../../../components/ui/StatTile';
+import { btn } from '../../../../components/ui/classes';
+import { useI18n } from '../../../../i18n/context';
+import { computeBalances, findBalance, participantShares } from '../../../../lib/balances';
+import { formatDate } from '../../../../lib/date';
+import { formatMoney, formatMoneySigned } from '../../../../lib/money';
+import { useTrip, useTripRecords } from '../../../../store/context';
 
-const translations = {
-  en: {
-    details: 'Participant Details',
-    name: 'Name',
-    notFound: 'Participant not found.',
-    back: 'Back to list',
-    totalContributed: 'Total Contributed',
-    totalSpent: 'Total Spent',
-    net: 'Net',
-    contributions: 'Contributions',
-    noContributions: 'No contributions.',
-    expensesPaid: 'Expenses Paid',
-    noExpenses: 'No expenses.',
-  },
-  vn: {
-    details: 'Chi tiết thành viên',
-    name: 'Tên',
-    notFound: 'Không tìm thấy thành viên.',
-    back: 'Quay lại danh sách',
-    totalContributed: 'Tổng tiền ứng trước',
-    totalSpent: 'Tổng chi tiêu',
-    net: 'Còn lại',
-    contributions: 'Tiền ứng trước',
-    noContributions: 'Chưa có tiền ứng trước.',
-    expensesPaid: 'Chi tiêu',
-    noExpenses: 'Chưa có chi tiêu.',
-  },
-};
-
-interface ParticipantExpense {
-  id: string;
-  description: string;
-  amount: number;
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="card p-5">
+      <h2 className="mb-3 text-base font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
 }
 
-const ParticipantDetail: React.FC = () => {
-  const { id, participantId } = useParams<{ id: string; participantId: string }>();
-  const { getById } = useTrips();
-  const [loading, setLoading] = React.useState(true);
-  const [lang, setLang] = React.useState('en');
-  const { expenses } = useExpenses(id);
-  const { contributions } = useContributions(id);
-  const trip = id ? getById(id) : null;
-  const participant = trip?.participants.find((p) => p.id === participantId);
-  React.useEffect(() => {
-    setLoading(false);
-  }, [id, expenses, contributions]);
-  React.useEffect(() => {
-    const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
-    window.addEventListener('app:language-changed', handler as EventListener);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler as EventListener);
-  }, []);
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+function MoneyRow({ label, sub, value }: { label: string; sub?: string; value: string }) {
+  return (
+    <li className="row flex items-center gap-3 rounded-lg px-1 py-2.5">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{label}</p>
+        {sub && <p className="text-xs text-ink-muted">{sub}</p>}
+      </div>
+      <span className="font-semibold tabular-nums">{value}</span>
+    </li>
+  );
+}
 
-  if (loading || !trip || !participant) {
-    return <Loading />;
+export default function ParticipantDetail() {
+  const { id, participantId } = useParams<{ id: string; participantId: string }>();
+  const { t, locale } = useI18n();
+  const trip = useTrip(id);
+  const { expenses, contributions } = useTripRecords(id);
+
+  const participant = useMemo(
+    () => trip?.participants.find((person) => person.id === participantId) ?? null,
+    [trip, participantId],
+  );
+  const balance = useMemo(() => {
+    if (!trip || !participant) return null;
+    return findBalance(computeBalances(trip, expenses, contributions), participant.id);
+  }, [trip, participant, expenses, contributions]);
+
+  const ownContributions = useMemo(
+    () => contributions.filter((item) => item.participantId === participantId),
+    [contributions, participantId],
+  );
+  const shares = useMemo(
+    () => (participantId ? participantShares(expenses, participantId) : []),
+    [expenses, participantId],
+  );
+  const paidExpenses = useMemo(
+    () => expenses.filter((expense) => expense.paidById === participantId),
+    [expenses, participantId],
+  );
+
+  if (!trip) {
+    return (
+      <EmptyState
+        icon={<IconAlert className="h-5 w-5" />}
+        title={t.trip.notFound}
+        description={t.trip.notFoundHint}
+        action={
+          <Link to="/" className={btn('primary')}>
+            <IconArrowLeft className="h-4 w-4" />
+            {t.trip.backToTrips}
+          </Link>
+        }
+      />
+    );
   }
 
-  // Filter contributions and expenses for this participant
-  const participantContributions = contributions.filter((c) => c.participant.id === participant.id);
-  const participantExpenses: ParticipantExpense[] = [];
-  expenses.map((e) => {
-    const split: ExpenseSplit | undefined = e.splits.find((s) => s.participant.id === participant.id);
-    if (split) {
-      participantExpenses.push({
-        id: e.id,
-        description: e.description,
-        amount: split.amount,
-      });
-    }
-  });
-  const totalContributed = participantContributions.reduce((sum, c) => sum + c.amount, 0);
-  const totalSpent = participantExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-  const net = totalContributed - totalSpent;
+  if (!participant || !balance) {
+    return (
+      <EmptyState
+        icon={<IconAlert className="h-5 w-5" />}
+        title={t.participants.memberNotFound}
+        action={
+          <Link to={`/trip/${trip.id}/participants`} className={btn('primary')}>
+            <IconArrowLeft className="h-4 w-4" />
+            {t.participants.backToMembers}
+          </Link>
+        }
+      />
+    );
+  }
 
   return (
-    <main className="max-w-xl mx-auto py-10">
-      <div className="bg-card rounded-2xl shadow-lg p-8 bg-surface border border-surface">
-        <h2 className="text-3xl font-bold mb-6 text-center text-primary drop-shadow">{t.details}</h2>
-        <div className="mb-6 flex flex-col items-center">
-          <div className="text-lg font-semibold text-primary mb-1">{t.name}</div>
-          <div className="text-2xl font-bold text-primary mb-2">{participant.name}</div>
-        </div>
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="bg-input-background rounded-xl p-4 shadow">
-            <div className="text-sm text-secondary">{t.totalContributed}</div>
-            <div className="text-xl font-bold text-primary">{totalContributed}</div>
-          </div>
-          <div className="bg-input-background rounded-xl p-4 shadow">
-            <div className="text-sm text-secondary">{t.totalSpent}</div>
-            <div className="text-xl font-bold text-primary">{totalSpent}</div>
-          </div>
-          <div
-            className={`rounded-xl p-4 shadow ${
-              net > 0
-                ? 'bg-input-background text-success'
-                : net < 0
-                  ? 'bg-input-background text-danger'
-                  : 'bg-surface text-text-body'
-            }`}
-          >
-            <div className="text-sm text-secondary">{t.net}</div>
-            <div className="text-xl font-bold">{net}</div>
-          </div>
-        </div>
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3 text-primary flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-primary rounded-full"></span> {t.contributions}
-          </h3>
-          {participantContributions.length === 0 ? (
-            <div className="text-muted italic text-center">{t.noContributions}</div>
-          ) : (
-            <ul className="divide-y divide-surface">
-              {participantContributions.map((c) => (
-                <li key={c.id} className="py-2 flex justify-between text-primary">
-                  <span className="font-medium">{new Date(c.date).toLocaleDateString()}</span>
-                  <span className="font-semibold">{c.amount}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3 text-primary flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-primary rounded-full"></span> {t.expensesPaid}
-          </h3>
-          {participantExpenses.length === 0 ? (
-            <div className="text-muted italic text-center">{t.noExpenses}</div>
-          ) : (
-            <ul className="divide-y divide-surface">
-              {participantExpenses.map((e) => (
-                <li key={e.id} className="py-2 flex justify-between text-primary">
-                  <span className="font-medium">{e.description}</span>
-                  <span className="font-semibold">{e.amount}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="flex justify-center mt-6">
-          <Link
-            to={`/trip/${trip.id}/participants`}
-            className="px-6 py-2 rounded-xl bg-primary text-text-button hover:bg-primary-hover font-semibold shadow transition"
-          >
-            {t.back}
-          </Link>
-        </div>
-      </div>
-    </main>
-  );
-};
+    <div className="space-y-5">
+      <Link
+        to={`/trip/${trip.id}/participants`}
+        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand"
+      >
+        <IconArrowLeft className="h-4 w-4" />
+        {t.participants.backToMembers}
+      </Link>
 
-export default ParticipantDetail;
+      <div>
+        <h1 className="text-2xl font-semibold sm:text-3xl">{participant.name}</h1>
+        <p className="mt-1 text-sm text-ink-muted">{trip.name}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile
+          label={t.participants.paidIn}
+          value={formatMoney(balance.contributed, trip.currency, locale)}
+        />
+        <StatTile
+          label={t.participants.share}
+          value={formatMoney(balance.share, trip.currency, locale)}
+        />
+        <StatTile
+          label={t.participants.net}
+          value={formatMoneySigned(balance.net, trip.currency, locale)}
+          tone={balance.net > 0 ? 'good' : balance.net < 0 ? 'bad' : 'neutral'}
+          hint={
+            balance.net > 0 ? t.trip.getsBack : balance.net < 0 ? t.trip.owes : t.trip.settled
+          }
+        />
+        <StatTile
+          label={t.participants.paidOutOfPocket}
+          value={formatMoney(balance.paidOutOfPocket, trip.currency, locale)}
+          hint={t.participants.paidOutOfPocketHint}
+        />
+      </div>
+
+      <Section title={t.participants.contributionsTitle}>
+        {ownContributions.length === 0 ? (
+          <EmptyState title={t.participants.contributionsEmpty} compact />
+        ) : (
+          <ul className="divide-y divide-border">
+            {ownContributions.map((contribution) => (
+              <MoneyRow
+                key={contribution.id}
+                label={formatDate(contribution.date, locale)}
+                value={formatMoney(contribution.amount, trip.currency, locale)}
+              />
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title={t.participants.sharesTitle}>
+        {shares.length === 0 ? (
+          <EmptyState title={t.participants.sharesEmpty} compact />
+        ) : (
+          <ul className="divide-y divide-border">
+            {shares.map(({ expense, amount }) => (
+              <MoneyRow
+                key={expense.id}
+                label={expense.description}
+                sub={formatDate(expense.date, locale)}
+                value={formatMoney(amount, trip.currency, locale)}
+              />
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title={t.participants.paidTitle}>
+        {paidExpenses.length === 0 ? (
+          <EmptyState title={t.participants.paidEmpty} compact />
+        ) : (
+          <ul className="divide-y divide-border">
+            {paidExpenses.map((expense) => (
+              <MoneyRow
+                key={expense.id}
+                label={expense.description}
+                sub={formatDate(expense.date, locale)}
+                value={formatMoney(expense.amount, trip.currency, locale)}
+              />
+            ))}
+          </ul>
+        )}
+      </Section>
+    </div>
+  );
+}

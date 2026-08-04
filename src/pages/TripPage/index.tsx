@@ -1,223 +1,321 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import Loading from '../../components/Loading';
-import ContributionSection from '../../components/TripPage/ContributionSection';
-import ExpenseSection from '../../components/TripPage/ExpenseSection';
-import TripInfoSection from '../../components/TripPage/TripInfoSection';
-import useContributions from '../../hooks/useContributions';
-import useExpenses from '../../hooks/useExpenses';
-import useTrips from '../../hooks/useTrips';
-import type { Contribution, Expense, Trip } from '../../types/trip';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import BalanceList from '../../components/BalanceList';
+import ContributionForm from '../../components/ContributionForm';
+import ContributionList from '../../components/ContributionList';
+import ExpenseForm from '../../components/ExpenseForm';
+import ExpenseList from '../../components/ExpenseList';
+import TripForm from '../../components/TripForm';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import EmptyState from '../../components/ui/EmptyState';
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconPencil,
+  IconPlus,
+  IconReceipt,
+  IconScale,
+  IconUsers,
+  IconWallet,
+} from '../../components/ui/Icons';
+import Modal from '../../components/ui/Modal';
+import StatTile from '../../components/ui/StatTile';
+import { btn } from '../../components/ui/classes';
+import { useI18n } from '../../i18n/context';
+import { computeBalances, computeTotals } from '../../lib/balances';
+import { formatDateRange } from '../../lib/date';
+import { formatMoney } from '../../lib/money';
+import { useLockedParticipantIds, useTrip, useTripRecords, useTripStore } from '../../store/context';
+import type {
+  Contribution,
+  ContributionDraft,
+  Expense,
+  ExpenseDraft,
+  ID,
+  TripDraft,
+} from '../../types/trip';
 
-const translations = {
-  en: {
-    notFound: 'Trip not found.',
-    back: 'Back',
-    participants: 'Participants:',
-    totalMembers: 'Total members:',
-    totalContributions: 'Total contributions:',
-    totalExpenses: 'Total expenses:',
-    addExpense: 'Add New Expense',
-    addContribution: 'Add New Contribution',
-    cancel: 'Cancel',
-    contributions: 'Contributions',
-    noContributions: 'No contributions yet.',
-    amount: 'Amount',
-    date: 'Date',
-    expensesDetails: 'Expenses Details',
-    noExpenses: 'No expenses yet.',
-    paidBy: 'Paid by',
-    splitType: 'Split type',
-    equal: 'Equal',
-    custom: 'Custom',
-    splits: 'Splits:',
-    edit: 'Edit',
-    remove: 'Remove',
-    expenses: 'Expenses',
-    expensesDesc:
-      'Expense UI will be migrated next. Existing app stores per-trip expenses in localStorage under key "expenses{id}".',
-    expenseWarning: 'Warning: Expenses exceed contributions!',
-    ParticipantDetail: 'Participant Detail',
-  },
-  vn: {
-    notFound: 'Không tìm thấy chuyến đi.',
-    back: 'Quay lại',
-    participants: 'Thành viên:',
-    totalMembers: 'Tổng số thành viên:',
-    totalContributions: 'Tổng số đóng góp:',
-    totalExpenses: 'Tổng chi tiêu:',
-    addExpense: 'Thêm khoản chi mới',
-    addContribution: 'Thêm tiền ứng trước',
-    cancel: 'Hủy',
-    contributions: 'Tiền ứng trước',
-    noContributions: 'Chưa có ai đóng góp.',
-    amount: 'Số tiền',
-    date: 'Ngày',
-    expensesDetails: 'Chi tiết chi tiêu',
-    noExpenses: 'Chưa có khoản chi nào.',
-    paidBy: 'Người thanh toán',
-    splitType: 'Cách chia',
-    equal: 'Chia đều',
-    custom: 'Tùy chỉnh',
-    splits: 'Chia cho:',
-    edit: 'Sửa',
-    remove: 'Xóa',
-    expenses: 'Khoản chi',
-    expensesDesc:
-      'Giao diện chi tiêu sẽ được cập nhật trong bản tiếp theo. Hiện tại, ứng dụng lưu chi tiêu của từng chuyến đi trong localStorage với khóa "expenses{id}".',
-    expenseWarning: 'Cảnh báo: Chi tiêu vượt quá tổng đóng góp!',
-    ParticipantDetail: 'Chi tiết thành viên',
-  },
-};
+type ActiveModal = 'trip' | 'contribution' | 'expense' | null;
 
-const TripPage: React.FC = () => {
+type PendingDelete = { kind: 'contribution' | 'expense'; id: ID } | null;
+
+function Section({
+  icon,
+  title,
+  action,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="card p-5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-base font-semibold">
+          <span className="text-brand">{icon}</span>
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export default function TripPage() {
   const { id } = useParams<{ id: string }>();
-  const { getById } = useTrips();
-  const [loading, setLoading] = useState(true);
-  const [trip, setTrip] = useState<Trip | null>(null);
+  const { t, locale } = useI18n();
+  const trip = useTrip(id);
+  const { expenses, contributions } = useTripRecords(id);
+  const lockedIds = useLockedParticipantIds(id);
+  const {
+    updateTrip,
+    addContribution,
+    updateContribution,
+    deleteContribution,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+  } = useTripStore();
 
-  useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      setTrip(null);
-      return;
-    }
-    setLoading(true);
-    setTimeout(() => {
-      const t = getById(id);
-      setTrip(t);
-      setLoading(false);
-    }, 400); // Simulate loading
-  }, [id, getById]);
-  const [lang, setLang] = useState('en');
-  const { expenses, addExpense, editExpense, removeExpense } = useExpenses(id);
-  const { contributions, addContribution, editContribution, removeContribution } = useContributions(id);
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [editingContribution, setEditingContribution] = useState<Contribution | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
 
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [editExpenseId, setEditExpenseId] = useState<string | null>(null);
-  const [showContributionForm, setShowContributionForm] = useState(false);
-  const [editContributionId, setEditContributionId] = useState<string | null>(null);
+  const totals = useMemo(
+    () => (trip ? computeTotals(trip, expenses, contributions) : null),
+    [trip, expenses, contributions],
+  );
+  const balances = useMemo(
+    () => (trip ? computeBalances(trip, expenses, contributions) : []),
+    [trip, expenses, contributions],
+  );
 
-  useEffect(() => {
-    const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
-    window.addEventListener('app:language-changed', handler as EventListener);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler as EventListener);
-  }, []);
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
-
-  if (loading || !trip || !id) {
-    return <Loading />;
+  if (!trip || !totals) {
+    return (
+      <EmptyState
+        icon={<IconAlert className="h-5 w-5" />}
+        title={t.trip.notFound}
+        description={t.trip.notFoundHint}
+        action={
+          <Link to="/" className={btn('primary')}>
+            <IconArrowLeft className="h-4 w-4" />
+            {t.trip.backToTrips}
+          </Link>
+        }
+      />
+    );
   }
 
-  // Calculate totals
-  const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-  // Contribution handlers
-  function handleAddContribution(contribution: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>) {
-    addContribution(contribution);
-    setShowContributionForm(false);
+  function closeModal() {
+    setActiveModal(null);
+    setEditingContribution(null);
+    setEditingExpense(null);
   }
 
-  function handleEditContributionEvent(contributionId: string) {
-    setEditContributionId(contributionId);
-    setShowContributionForm(true);
+  const handleTripSubmit = (draft: TripDraft) => {
+    updateTrip(trip.id, draft);
+    closeModal();
+  };
+
+  const handleContributionSubmit = (draft: ContributionDraft) => {
+    if (editingContribution) updateContribution(editingContribution.id, draft);
+    else addContribution(trip.id, draft);
+    closeModal();
+  };
+
+  const handleExpenseSubmit = (draft: ExpenseDraft, alsoContribute: boolean) => {
+    if (editingExpense) updateExpense(editingExpense.id, draft);
+    else addExpense(trip.id, draft, alsoContribute);
+    closeModal();
+  };
+
+  function confirmDelete() {
+    if (pendingDelete?.kind === 'contribution') deleteContribution(pendingDelete.id);
+    if (pendingDelete?.kind === 'expense') deleteExpense(pendingDelete.id);
+    setPendingDelete(null);
   }
 
-  function handleEditContribution(
-    contributionId: string,
-    updated: Omit<Contribution, 'id' | 'createdAt' | 'updatedAt'>
-  ) {
-    editContribution(contributionId, updated);
-    setEditContributionId(null);
-    setShowContributionForm(false);
-  }
-
-  function handleRemoveContribution(contributionId: string) {
-    removeContribution(contributionId);
-    setEditContributionId(null);
-  }
-
-  // Expense handlers
-  function handleAddExpense(
-    expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> & { markAsContribution?: boolean }
-  ) {
-    const { markAsContribution, ...expenseData } = expense;
-    addExpense(expenseData);
-    if (markAsContribution && expenseData.paidBy && expenseData.amount) {
-      addContribution({
-        tripId: id!,
-        participant: expenseData.paidBy,
-        amount: expenseData.amount,
-        date: new Date().toISOString(),
-      });
-    }
-    setShowExpenseForm(false);
-    setEditExpenseId(null);
-  }
-
-  function handleEditExpenseEvent(expenseId: string) {
-    setEditExpenseId(expenseId);
-    setShowExpenseForm(true);
-  }
-
-  function handleEditExpense(expenseId: string, updated: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) {
-    editExpense(expenseId, updated);
-    setEditExpenseId(null);
-    setShowExpenseForm(false);
-  }
-
-  function handleRemoveExpense(expenseId: string) {
-    removeExpense(expenseId);
-    setEditExpenseId(null);
-  }
+  const dates = formatDateRange(trip.startDate, trip.endDate, locale);
+  const hasMembers = trip.participants.length > 0;
 
   return (
-    <main className="min-h-[60vh] bg-background py-8">
-      <section className="max-w-2xl mx-auto bg-card rounded-2xl shadow-lg p-8 bg-surface border border-surface text-primary">
-        <TripInfoSection
-          tripId={trip.id}
-          tripName={trip.name}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
-          participants={trip.participants}
-          totalContributions={totalContributions}
-          totalExpenses={totalExpenses}
-          t={t}
-          onAddExpense={() => setShowExpenseForm(true)}
-          onAddContribution={() => setShowContributionForm(true)}
-        />
-        <ContributionSection
-          showForm={showContributionForm}
-          setEditContributionId={setEditContributionId}
-          onShowForm={setShowContributionForm}
-          onAdd={handleAddContribution}
-          onEdit={handleEditContribution}
-          onRemove={handleRemoveContribution}
-          onEditContributionEvent={handleEditContributionEvent}
-          participants={trip.participants}
-          contributions={contributions}
-          t={t}
-          contributionToEdit={contributions.find((c) => c.id === editContributionId) || null}
-        />
-        <ExpenseSection
-          tripId={id}
-          isFormVisible={showExpenseForm}
-          setFormVisible={setShowExpenseForm}
-          setEditExpenseId={setEditExpenseId}
-          onAddExpense={handleAddExpense}
-          onRemoveExpense={handleRemoveExpense}
-          onEditExpense={handleEditExpense}
-          onOpenExpenseForm={handleEditExpenseEvent}
-          participants={trip.participants}
-          expenses={expenses}
-          t={t}
-          expenseToEdit={expenses.find((e) => e.id === editExpenseId) || null}
-        />
-      </section>
-    </main>
-  );
-};
+    <div className="space-y-5">
+      <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand">
+        <IconArrowLeft className="h-4 w-4" />
+        {t.trip.backToTrips}
+      </Link>
 
-export default TripPage;
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{trip.name}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            <span>{dates || t.home.noDates}</span>
+            <span className="badge badge-brand">{trip.currency}</span>
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/trip/${trip.id}/participants`} className={btn('secondary')}>
+            <IconUsers className="h-4 w-4" />
+            {t.trip.allMembers}
+          </Link>
+          <Button variant="secondary" onClick={() => setActiveModal('trip')}>
+            <IconPencil className="h-4 w-4" />
+            {t.trip.editTrip}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile
+          label={t.trip.members}
+          value={String(trip.participants.length)}
+          icon={<IconUsers className="h-3.5 w-3.5" />}
+        />
+        <StatTile
+          label={t.trip.fundIn}
+          value={formatMoney(totals.contributions, trip.currency, locale)}
+          icon={<IconWallet className="h-3.5 w-3.5" />}
+        />
+        <StatTile
+          label={t.trip.spent}
+          value={formatMoney(totals.expenses, trip.currency, locale)}
+          icon={<IconReceipt className="h-3.5 w-3.5" />}
+        />
+        <StatTile
+          label={t.trip.remaining}
+          value={formatMoney(totals.remaining, trip.currency, locale)}
+          icon={<IconScale className="h-3.5 w-3.5" />}
+          tone={totals.remaining < 0 ? 'bad' : 'good'}
+        />
+      </div>
+
+      {totals.remaining < 0 && (
+        <p
+          role="status"
+          className="flex items-center gap-2 rounded-xl border border-warn bg-warn-soft px-4 py-3 text-sm text-warn"
+        >
+          <IconAlert className="h-4 w-4 shrink-0" />
+          {t.trip.overspent}
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => setActiveModal('contribution')}
+          disabled={!hasMembers}
+          title={hasMembers ? undefined : t.trip.balancesEmpty}
+        >
+          <IconPlus className="h-4 w-4" />
+          {t.trip.addContribution}
+        </Button>
+        <Button
+          variant="soft"
+          onClick={() => setActiveModal('expense')}
+          disabled={!hasMembers}
+          title={hasMembers ? undefined : t.trip.balancesEmpty}
+        >
+          <IconPlus className="h-4 w-4" />
+          {t.trip.addExpense}
+        </Button>
+      </div>
+
+      <Section icon={<IconScale className="h-4 w-4" />} title={t.trip.balancesTitle}>
+        {hasMembers ? (
+          <>
+            <p className="mb-1 text-xs text-ink-muted">{t.trip.balancesHint}</p>
+            <BalanceList trip={trip} balances={balances} />
+          </>
+        ) : (
+          <EmptyState title={t.trip.balancesEmpty} compact />
+        )}
+      </Section>
+
+      <Section icon={<IconWallet className="h-4 w-4" />} title={t.contribution.title}>
+        {contributions.length === 0 ? (
+          <EmptyState title={t.contribution.empty} compact />
+        ) : (
+          <ContributionList
+            trip={trip}
+            contributions={contributions}
+            onEdit={(contribution) => {
+              setEditingContribution(contribution);
+              setActiveModal('contribution');
+            }}
+            onDelete={(contributionId) =>
+              setPendingDelete({ kind: 'contribution', id: contributionId })
+            }
+          />
+        )}
+      </Section>
+
+      <Section icon={<IconReceipt className="h-4 w-4" />} title={t.expense.title}>
+        {expenses.length === 0 ? (
+          <EmptyState title={t.expense.empty} compact />
+        ) : (
+          <ExpenseList
+            trip={trip}
+            expenses={expenses}
+            onEdit={(expense) => {
+              setEditingExpense(expense);
+              setActiveModal('expense');
+            }}
+            onDelete={(expenseId) => setPendingDelete({ kind: 'expense', id: expenseId })}
+          />
+        )}
+      </Section>
+
+      <Modal open={activeModal === 'trip'} title={t.tripForm.editTitle} onClose={closeModal}>
+        <TripForm
+          trip={trip}
+          lockedParticipantIds={lockedIds}
+          onSubmit={handleTripSubmit}
+          onCancel={closeModal}
+        />
+      </Modal>
+
+      <Modal
+        open={activeModal === 'contribution'}
+        title={editingContribution ? t.contribution.editTitle : t.contribution.addTitle}
+        onClose={closeModal}
+      >
+        <ContributionForm
+          key={editingContribution?.id ?? 'new'}
+          trip={trip}
+          contribution={editingContribution}
+          onSubmit={handleContributionSubmit}
+          onCancel={closeModal}
+        />
+      </Modal>
+
+      <Modal
+        open={activeModal === 'expense'}
+        title={editingExpense ? t.expense.editTitle : t.expense.addTitle}
+        onClose={closeModal}
+        widthClass="max-w-2xl"
+      >
+        <ExpenseForm
+          key={editingExpense?.id ?? 'new'}
+          trip={trip}
+          expense={editingExpense}
+          onSubmit={handleExpenseSubmit}
+          onCancel={closeModal}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={
+          pendingDelete?.kind === 'expense' ? t.expense.deleteTitle : t.contribution.deleteTitle
+        }
+        body={pendingDelete?.kind === 'expense' ? t.expense.deleteBody : t.contribution.deleteBody}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </div>
+  );
+}

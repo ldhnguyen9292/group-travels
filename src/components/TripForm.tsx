@@ -1,206 +1,235 @@
-import React, { useEffect, useState } from 'react';
-import type { Participant, Trip } from '../types/trip';
+import { useId, useState, type FormEvent } from 'react';
+import { useI18n } from '../i18n/context';
+import { isBefore } from '../lib/date';
+import { createId } from '../lib/id';
+import { CURRENCIES, DEFAULT_CURRENCY } from '../lib/money';
+import type { CurrencyCode, ID, Participant, Trip, TripDraft } from '../types/trip';
+import Button from './ui/Button';
+import Field from './ui/Field';
+import { IconPlus, IconTrash } from './ui/Icons';
+import { input } from './ui/classes';
 
-type Props = {
-  onAdd: (data: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  initialData?: Omit<Trip, 'id' | 'createdAt'>;
-  onCancel?: () => void;
-};
+export interface TripFormProps {
+  trip?: Trip | null;
+  /** Members with money logged: removing them would corrupt the totals. */
+  lockedParticipantIds?: Set<ID>;
+  onSubmit: (draft: TripDraft) => void;
+  onCancel: () => void;
+}
 
-const translations = {
-  en: {
-    createTrip: 'Create trip',
-    show: 'Show',
-    hide: 'Hide',
-    tripName: 'Trip name',
-    addParticipants: 'Add participants (comma separated)',
-    add: 'Add',
-    saveTrip: 'Save trip',
-    participants: 'Participants:',
-    remove: 'Remove',
-    startDate: 'Start date',
-    endDate: 'End date',
-  },
-  vn: {
-    createTrip: 'Tạo chuyến đi',
-    show: 'Hiện',
-    hide: 'Ẩn',
-    tripName: 'Tên chuyến đi',
-    addParticipants: 'Thêm thành viên (phân tách bằng dấu phẩy)',
-    add: 'Thêm',
-    saveTrip: 'Lưu chuyến đi',
-    participants: 'Thành viên:',
-    remove: 'Xóa',
-    startDate: 'Ngày bắt đầu',
-    endDate: 'Ngày kết thúc',
-  },
-};
+interface Errors {
+  name?: string;
+  dates?: string;
+  participants?: string;
+}
 
-const TripForm: React.FC<Props> = ({ onAdd, initialData, onCancel }) => {
-  const [name, setName] = useState(initialData?.name || '');
-  const [startDate, setStartDate] = useState(initialData?.startDate || '');
-  const [endDate, setEndDate] = useState(initialData?.endDate || '');
-  const [participantInput, setParticipantInput] = useState('');
-  const [participants, setParticipants] = useState<Participant[]>(initialData?.participants || []);
-  const [lang, setLang] = useState('en');
-  const [errors, setErrors] = useState<{ name?: string; startDate?: string; participants?: string }>({});
-  useEffect(() => {
-    const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
-    window.addEventListener('app:language-changed', handler as EventListener);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler as EventListener);
-  }, []);
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+function sameName(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+}
 
-  function addParticipantFromInput() {
-    const v = participantInput.trim();
-    if (!v) return;
-    const list = v
+export default function TripForm({
+  trip,
+  lockedParticipantIds,
+  onSubmit,
+  onCancel,
+}: TripFormProps) {
+  const { t } = useI18n();
+  const fieldId = useId();
+
+  const [name, setName] = useState(trip?.name ?? '');
+  const [currency, setCurrency] = useState<CurrencyCode>(trip?.currency ?? DEFAULT_CURRENCY);
+  const [startDate, setStartDate] = useState(trip?.startDate ?? '');
+  const [endDate, setEndDate] = useState(trip?.endDate ?? '');
+  const [participants, setParticipants] = useState<Participant[]>(trip?.participants ?? []);
+  const [draftNames, setDraftNames] = useState('');
+  const [errors, setErrors] = useState<Errors>({});
+
+  function addFromInput() {
+    const names = draftNames
       .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((name) => ({
-        id: `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name,
-      }));
-    setParticipants((p) => {
-      const names = new Set(p.map((pt) => pt.name));
-      return [...p, ...list.filter((pt) => !names.has(pt.name))];
-    });
-    setParticipantInput('');
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (names.length === 0) return;
+
+    const added: Participant[] = [];
+    let duplicate = false;
+    for (const candidate of names) {
+      const exists =
+        participants.some((person) => sameName(person.name, candidate)) ||
+        added.some((person) => sameName(person.name, candidate));
+      if (exists) {
+        duplicate = true;
+        continue;
+      }
+      added.push({ id: createId(), name: candidate });
+    }
+
+    if (added.length > 0) setParticipants((current) => [...current, ...added]);
+    setDraftNames('');
+    setErrors((current) => ({
+      ...current,
+      participants: duplicate && added.length === 0 ? t.tripForm.duplicate : undefined,
+    }));
   }
 
-  function removeParticipant(idx: number) {
-    setParticipants((p) => p.filter((_, i) => i !== idx));
+  function renameParticipant(id: ID, value: string) {
+    setParticipants((current) =>
+      current.map((person) => (person.id === id ? { ...person, name: value } : person)),
+    );
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const newErrors: { name?: string; startDate?: string; participants?: string } = {};
-    if (!name.trim()) newErrors.name = t.tripName + ' is required';
-    if (!startDate) newErrors.startDate = 'Start date is required';
-    if (participants.length === 0) newErrors.participants = 'At least one member is required';
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-    const userDevice = localStorage.getItem('userDevice') || '';
-    onAdd({
+  function removeParticipant(id: ID) {
+    setParticipants((current) => current.filter((person) => person.id !== id));
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const cleaned = participants.map((person) => ({ ...person, name: person.name.trim() }));
+    const next: Errors = {};
+
+    if (!name.trim()) next.name = t.tripForm.errorName;
+    if (cleaned.length === 0 || cleaned.some((person) => !person.name)) {
+      next.participants = t.tripForm.errorMembers;
+    } else if (
+      cleaned.some((person, index) =>
+        cleaned.some((other, otherIndex) => otherIndex !== index && sameName(person.name, other.name)),
+      )
+    ) {
+      next.participants = t.tripForm.duplicate;
+    }
+    if (startDate && endDate && isBefore(endDate, startDate)) next.dates = t.tripForm.errorDateOrder;
+
+    setErrors(next);
+    if (Object.values(next).some(Boolean)) return;
+
+    onSubmit({
       name: name.trim(),
+      currency,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      participants,
-      userDevice,
+      participants: cleaned,
     });
-    setName('');
-    setStartDate('');
-    setEndDate('');
-    setParticipants([]);
-    setParticipantInput('');
-    setErrors({});
-    if (onCancel) onCancel();
   }
 
   return (
-    <section className="mb-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-4">
-          <h3 className="text-xl font-semibold m-0 flex-1">{t.createTrip}</h3>
-          {onCancel && (
-            <button
-              onClick={onCancel}
-              aria-label={t.hide}
-              className="text-secondary hover:text-primary px-2 py-1 rounded border border-surface bg-input-background"
-            >
-              {t.hide}
-            </button>
-          )}
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <Field id={`${fieldId}-name`} label={t.tripForm.name} error={errors.name}>
+        <input
+          id={`${fieldId}-name`}
+          className={input(Boolean(errors.name))}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder={t.tripForm.namePlaceholder}
+          maxLength={80}
+          autoComplete="off"
+        />
+      </Field>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-primary">{t.tripName}</label>
-              <input
-                className={`w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.name ? 'border-danger' : ''}`}
-                placeholder={t.tripName}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {errors.name && <div className="text-danger text-xs mt-1">{errors.name}</div>}
-            </div>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-sm font-medium mb-1 text-primary">{t.startDate}</label>
-                <input
-                  type="date"
-                  className={`w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.startDate ? 'border-danger' : ''}`}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                {errors.startDate && <div className="text-danger text-xs mt-1">{errors.startDate}</div>}
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium mb-1 text-primary">{t.endDate}</label>
-                <input
-                  type="date"
-                  className="w-full rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1 text-primary">{t.participants}</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                className={`flex-1 rounded border border-surface bg-input-background text-primary px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${errors.participants ? 'border-danger' : ''}`}
-                placeholder={t.addParticipants}
-                value={participantInput}
-                onChange={(e) => setParticipantInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addParticipantFromInput();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={addParticipantFromInput}
-                className="px-3 py-2 rounded bg-primary text-on-primary hover:bg-primary-dark"
-              >
-                {t.add}
-              </button>
-            </div>
-            {errors.participants && <div className="text-danger text-xs mb-2">{errors.participants}</div>}
-            {participants.length > 0 && (
-              <ul className="flex flex-wrap gap-2">
-                {participants.map((p, idx) => (
-                  <li key={p.id} className="flex items-center gap-2 mb-1">
-                    <span>{p.name}</span>
-                    <button type="button" className="text-xs text-red-400" onClick={() => removeParticipant(idx)}>
-                      {t.remove}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-5 py-2 rounded bg-primary text-on-primary hover:bg-primary-hover font-semibold shadow"
-            >
-              {t.saveTrip}
-            </button>
-          </div>
-        </form>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field id={`${fieldId}-currency`} label={t.tripForm.currency}>
+          <select
+            id={`${fieldId}-currency`}
+            className={input()}
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value as CurrencyCode)}
+          >
+            {CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field id={`${fieldId}-start`} label={t.tripForm.startDate}>
+          <input
+            id={`${fieldId}-start`}
+            type="date"
+            className={input()}
+            value={startDate}
+            max={endDate || undefined}
+            onChange={(event) => setStartDate(event.target.value)}
+          />
+        </Field>
+        <Field id={`${fieldId}-end`} label={t.tripForm.endDate} error={errors.dates}>
+          <input
+            id={`${fieldId}-end`}
+            type="date"
+            className={input(Boolean(errors.dates))}
+            value={endDate}
+            min={startDate || undefined}
+            onChange={(event) => setEndDate(event.target.value)}
+          />
+        </Field>
       </div>
-    </section>
-  );
-};
 
-export default TripForm;
+      <div>
+        <label className="label" htmlFor={`${fieldId}-members`}>
+          {t.tripForm.members}
+        </label>
+        <div className="flex gap-2">
+          <input
+            id={`${fieldId}-members`}
+            className={input(Boolean(errors.participants))}
+            value={draftNames}
+            placeholder={t.tripForm.membersPlaceholder}
+            autoComplete="off"
+            onChange={(event) => setDraftNames(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addFromInput();
+              }
+            }}
+          />
+          <Button variant="soft" onClick={addFromInput} disabled={!draftNames.trim()}>
+            <IconPlus className="h-4 w-4" />
+            {t.common.add}
+          </Button>
+        </div>
+        {errors.participants ? (
+          <p className="field-error" role="alert">
+            {errors.participants}
+          </p>
+        ) : (
+          <p className="field-hint">{t.tripForm.membersHint}</p>
+        )}
+
+        {participants.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {participants.map((person, index) => {
+              const locked = lockedParticipantIds?.has(person.id) ?? false;
+              return (
+                <li key={person.id} className="flex items-center gap-2">
+                  <input
+                    className={input(!person.name.trim())}
+                    value={person.name}
+                    aria-label={`${t.tripForm.members} ${index + 1}`}
+                    maxLength={60}
+                    onChange={(event) => renameParticipant(person.id, event.target.value)}
+                  />
+                  <Button
+                    variant="danger-ghost"
+                    size="icon"
+                    onClick={() => removeParticipant(person.id)}
+                    disabled={locked}
+                    title={locked ? t.tripForm.locked : t.common.remove}
+                    aria-label={`${t.common.remove} ${person.name}`}
+                  >
+                    <IconTrash className="h-4 w-4" />
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-2 border-t border-border pt-4">
+        <Button variant="secondary" onClick={onCancel}>
+          {t.common.cancel}
+        </Button>
+        <Button type="submit">{trip ? t.tripForm.save : t.tripForm.create}</Button>
+      </div>
+    </form>
+  );
+}

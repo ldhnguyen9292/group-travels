@@ -1,96 +1,112 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Loading from '../../../components/Loading';
-import useContributions from '../../../hooks/useContributions';
-import useExpenses from '../../../hooks/useExpenses';
-import useTrips from '../../../hooks/useTrips';
+import { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import BalanceList from '../../../components/BalanceList';
+import TripForm from '../../../components/TripForm';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
+import { IconAlert, IconArrowLeft, IconPencil } from '../../../components/ui/Icons';
+import Modal from '../../../components/ui/Modal';
+import StatTile from '../../../components/ui/StatTile';
+import { btn } from '../../../components/ui/classes';
+import { useI18n } from '../../../i18n/context';
+import { computeBalances, computeTotals } from '../../../lib/balances';
+import { formatMoney } from '../../../lib/money';
+import {
+  useLockedParticipantIds,
+  useTrip,
+  useTripRecords,
+  useTripStore,
+} from '../../../store/context';
+import type { TripDraft } from '../../../types/trip';
 
-const translations = {
-  en: {
-    participants: 'Participants',
-    details: 'Details',
-    notFound: 'Trip not found.',
-    totalMembers: 'Total members:',
-    totalContributions: 'Total contributions',
-    totalExpenses: 'Total expenses',
-  },
-  vn: {
-    participants: 'Thành viên',
-    details: 'Chi tiết',
-    notFound: 'Không tìm thấy chuyến đi.',
-    totalMembers: 'Tổng số thành viên:',
-    totalContributions: 'Tổng tiền quỹ nhóm:',
-    totalExpenses: 'Tổng chi tiêu:',
-  },
-};
+export default function ParticipantsPage() {
+  const { id } = useParams<{ id: string }>();
+  const { t, locale } = useI18n();
+  const trip = useTrip(id);
+  const { expenses, contributions } = useTripRecords(id);
+  const lockedIds = useLockedParticipantIds(id);
+  const { updateTrip } = useTripStore();
+  const [formOpen, setFormOpen] = useState(false);
 
-const ParticipantsPage: React.FC = () => {
-  const { id } = useParams();
-  const { getById } = useTrips();
-  const [loading, setLoading] = React.useState(true);
-  const [lang, setLang] = React.useState('en');
-  const { expenses } = useExpenses(id as string);
-  const { contributions } = useContributions(id as string);
-  const navigate = useNavigate();
-  const trip = id ? getById(id as string) : null;
-  React.useEffect(() => {
-    setLoading(false);
-  }, [id, expenses, contributions]);
-  React.useEffect(() => {
-    const handler = (e: CustomEvent) => setLang((e.detail && e.detail.lang) || 'en');
-    window.addEventListener('app:language-changed', handler as EventListener);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler as EventListener);
-  }, []);
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+  const balances = useMemo(
+    () => (trip ? computeBalances(trip, expenses, contributions) : []),
+    [trip, expenses, contributions],
+  );
+  const totals = useMemo(
+    () => (trip ? computeTotals(trip, expenses, contributions) : null),
+    [trip, expenses, contributions],
+  );
 
-  if (loading || !trip) {
-    return <Loading />;
+  if (!trip || !totals) {
+    return (
+      <EmptyState
+        icon={<IconAlert className="h-5 w-5" />}
+        title={t.trip.notFound}
+        description={t.trip.notFoundHint}
+        action={
+          <Link to="/" className={btn('primary')}>
+            <IconArrowLeft className="h-4 w-4" />
+            {t.trip.backToTrips}
+          </Link>
+        }
+      />
+    );
   }
 
-  const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const handleSubmit = (draft: TripDraft) => {
+    updateTrip(trip.id, draft);
+    setFormOpen(false);
+  };
 
   return (
-    <main className="max-w-2xl mx-auto py-10">
-      <div className="bg-surface rounded-2xl shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-6 text-center drop-shadow">{trip.name}</h2>
-        <div className="mb-6 flex flex-col items-center">
-          <div className="text-lg font-semibold text-primary mb-1">
-            {trip.startDate} {trip.endDate ? `— ${trip.endDate}` : ''}
-          </div>
-        </div>
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="bg-input-background rounded-xl p-4 shadow">
-            <div className="text-sm text-secondary">{t.totalContributions}</div>
-            <div className="text-xl font-bold text-primary">{totalContributions}</div>
-          </div>
-          <div className="bg-input-background rounded-xl p-4 shadow">
-            <div className="text-sm text-secondary">{t.totalExpenses}</div>
-            <div className="text-xl font-bold text-primary">{totalExpenses}</div>
-          </div>
-          <div className="bg-input-background rounded-xl p-4 shadow">
-            <div className="text-sm text-secondary">{t.totalMembers}</div>
-            <div className="text-xl font-bold text-primary">{trip.participants.length}</div>
-          </div>
-        </div>
-        <h2 className="text-2xl font-semibold mb-4 text-center">{t.participants}</h2>
-        <ul className="divide-y divide-input-background mb-6">
-          {trip.participants.map((p) => (
-            <li key={p.id} className="py-3 flex justify-between items-center text-primary">
-              <span className="font-medium text-lg">{p.name}</span>
-              <button
-                onClick={() => navigate(`/trip/${trip.id}/participants/${p.id}`)}
-                className="px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary-dark text-sm font-semibold shadow transition"
-              >
-                {t.details}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </main>
-  );
-};
+    <div className="space-y-5">
+      <Link
+        to={`/trip/${trip.id}`}
+        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand"
+      >
+        <IconArrowLeft className="h-4 w-4" />
+        {trip.name}
+      </Link>
 
-export default ParticipantsPage;
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold sm:text-3xl">{t.participants.title}</h1>
+          <p className="mt-1 text-sm text-ink-muted">{t.participants.subtitle}</p>
+        </div>
+        <Button variant="secondary" onClick={() => setFormOpen(true)}>
+          <IconPencil className="h-4 w-4" />
+          {t.trip.editTrip}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <StatTile label={t.trip.members} value={String(trip.participants.length)} />
+        <StatTile
+          label={t.trip.fundIn}
+          value={formatMoney(totals.contributions, trip.currency, locale)}
+        />
+        <StatTile
+          label={t.trip.spent}
+          value={formatMoney(totals.expenses, trip.currency, locale)}
+        />
+      </div>
+
+      <section className="card p-5">
+        {trip.participants.length === 0 ? (
+          <EmptyState title={t.trip.balancesEmpty} compact />
+        ) : (
+          <BalanceList trip={trip} balances={balances} />
+        )}
+      </section>
+
+      <Modal open={formOpen} title={t.tripForm.editTitle} onClose={() => setFormOpen(false)}>
+        <TripForm
+          trip={trip}
+          lockedParticipantIds={lockedIds}
+          onSubmit={handleSubmit}
+          onCancel={() => setFormOpen(false)}
+        />
+      </Modal>
+    </div>
+  );
+}

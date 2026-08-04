@@ -1,82 +1,168 @@
-import React, { useEffect } from 'react';
-import { getOrCreateDeviceId } from '../../utils/device';
+import { useRef, useState } from 'react';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { IconAlert, IconCheck, IconDownload, IconTrash, IconUpload } from '../../components/ui/Icons';
+import { useI18n } from '../../i18n/context';
+import { todayISO } from '../../lib/date';
+import { DATA_VERSION, parseImportedData, type AppData } from '../../lib/storage';
+import { useTripStore } from '../../store/context';
 
-const translations = {
-  en: {
-    title: 'About Group Travel',
-    desc: 'Group Travel is a simple app to help you organize, track, and manage group trips. You can create trips, add participants, and keep track of your travel plans with ease.',
-    features: [
-      'Create and manage trips',
-      'Add and remove participants',
-      'Switch between English and Vietnamese',
-      'Switch between light and dark themes',
-      'Data is stored securely and uniquely per device',
-    ],
-    developerTitle: 'About the Developer',
-    developerDesc:
-      'Group Travel is a personal project by Heo Cơ CTin, made for the community — completely free forever, with no ads or fees.',
-    version: 'Version 1.0.0 © 2025 Group Travel',
-  },
-  vn: {
-    title: 'Giới thiệu Group Travel',
-    desc: 'Group Travel là ứng dụng đơn giản giúp bạn tổ chức, theo dõi và quản lý các chuyến đi nhóm. Bạn có thể tạo chuyến đi, thêm thành viên và quản lý kế hoạch du lịch dễ dàng.',
-    features: [
-      'Tạo và quản lý chuyến đi',
-      'Thêm và xóa thành viên',
-      'Chuyển đổi giữa tiếng Anh và tiếng Việt',
-      'Chuyển đổi giữa chế độ sáng và tối',
-      'Dữ liệu được lưu an toàn và duy nhất trên mỗi thiết bị',
-    ],
-    developerTitle: 'Về người phát triển',
-    developerDesc:
-      'Group Travel là dự án cá nhân của Heo Cơ CTin — làm vì cộng đồng, mãi mãi miễn phí và không đặt quảng cáo.',
-    version: 'Phiên bản 1.0.0 © 2025 Group Travel',
-  },
-};
+type Notice = { kind: 'ok' | 'error'; text: string } | null;
 
-const About: React.FC = () => {
-  const [lang, setLang] = React.useState(localStorage.getItem('lang') || 'en');
+export default function About() {
+  const { t } = useI18n();
+  const { trips, expenses, contributions, replaceAll, clearAll } = useTripStore();
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    getOrCreateDeviceId();
-    const handler = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setLang((customEvent.detail && customEvent.detail.lang) || 'en');
-    };
-    window.addEventListener('app:language-changed', handler);
-    setLang(localStorage.getItem('lang') || 'en');
-    return () => window.removeEventListener('app:language-changed', handler);
-  }, []);
+  const [pendingImport, setPendingImport] = useState<AppData | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
 
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+  function handleExport() {
+    const data: AppData = { version: DATA_VERSION, trips, expenses, contributions };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `group-travel-backup-${todayISO()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleFile(file: File) {
+    const parsed = parseImportedData(await file.text());
+    if (!parsed) {
+      setNotice({ kind: 'error', text: t.about.importError });
+      return;
+    }
+    setNotice(null);
+    setPendingImport(parsed);
+  }
 
   return (
-    <main className="min-h-[70vh] bg-background py-12 px-4">
-      <section className="max-w-3xl mx-auto bg-surface rounded-2xl shadow-lg p-8 border border-border">
-        {/* App Info */}
-        <h2 className="text-4xl font-bold mb-4 text-center text-text-h1">{t.title}</h2>
-        <p className="mb-6 text-center text-text-body leading-relaxed">{t.desc}</p>
+    <div className="mx-auto max-w-3xl space-y-5">
+      <section className="card p-6">
+        <h1 className="text-2xl font-semibold sm:text-3xl">{t.about.title}</h1>
+        <p className="mt-3 leading-relaxed text-ink-muted">{t.about.desc}</p>
 
-        {/* Features */}
-        <ul className="list-disc pl-6 space-y-2 mb-8 text-text-body">
-          {t.features.map((f, i) => (
-            <li key={i} className="hover:text-primary transition-colors duration-200">
-              {f}
+        <h2 className="mt-6 text-base font-semibold">{t.about.featuresTitle}</h2>
+        <ul className="mt-2 space-y-1.5">
+          {t.about.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2 text-sm">
+              <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <span>{feature}</span>
             </li>
           ))}
         </ul>
+      </section>
 
-        {/* Developer Info */}
-        <div className="border-t border-border pt-6 mt-6">
-          <h3 className="text-xl font-semibold mb-2 text-text-h2">{t.developerTitle}</h3>
-          <p className="text-text-muted leading-relaxed">{t.developerDesc}</p>
+      <section className="card p-6">
+        <h2 className="text-base font-semibold">{t.about.privacyTitle}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.about.privacyBody}</p>
+      </section>
+
+      <section className="card p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-base font-semibold">{t.about.dataTitle}</h2>
+          <p className="text-xs text-ink-muted">
+            {t.about.stats}: {trips.length} {t.about.tripsStored}
+          </p>
         </div>
 
-        {/* Footer Info */}
-        <div className="text-center text-text-muted text-sm border-t border-border pt-4 mt-6">{t.version}</div>
-      </section>
-    </main>
-  );
-};
+        {notice && (
+          <p
+            role="alert"
+            className={
+              notice.kind === 'error'
+                ? 'mt-3 flex items-center gap-2 rounded-xl border border-bad bg-bad-soft px-3.5 py-2.5 text-sm text-bad'
+                : 'mt-3 flex items-center gap-2 rounded-xl border border-good bg-good-soft px-3.5 py-2.5 text-sm text-good'
+            }
+          >
+            {notice.kind === 'error' ? (
+              <IconAlert className="h-4 w-4 shrink-0" />
+            ) : (
+              <IconCheck className="h-4 w-4 shrink-0" />
+            )}
+            {notice.text}
+          </p>
+        )}
 
-export default About;
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <p className="min-w-0 flex-1 text-sm text-ink-muted">{t.about.exportHint}</p>
+            <Button variant="secondary" onClick={handleExport} disabled={trips.length === 0}>
+              <IconDownload className="h-4 w-4" />
+              {t.about.exportAction}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <p className="min-w-0 flex-1 text-sm text-ink-muted">{t.about.importHint}</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                // Reset so picking the same file again still fires a change event.
+                event.target.value = '';
+                if (file) void handleFile(file);
+              }}
+            />
+            <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+              <IconUpload className="h-4 w-4" />
+              {t.about.importAction}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <p className="min-w-0 flex-1 text-sm text-ink-muted">{t.about.clearHint}</p>
+            <Button
+              variant="danger-ghost"
+              onClick={() => setClearOpen(true)}
+              disabled={trips.length === 0}
+            >
+              <IconTrash className="h-4 w-4" />
+              {t.about.clearAction}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="card p-6">
+        <h2 className="text-base font-semibold">{t.about.developerTitle}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.about.developerDesc}</p>
+        <p className="mt-4 border-t border-border pt-4 text-xs text-ink-muted">{t.about.version}</p>
+      </section>
+
+      <ConfirmDialog
+        open={pendingImport !== null}
+        title={t.about.importTitle}
+        body={t.about.importBody}
+        confirmLabel={t.about.importAction}
+        confirmVariant="primary"
+        onConfirm={() => {
+          if (pendingImport) replaceAll(pendingImport);
+          setPendingImport(null);
+          setNotice({ kind: 'ok', text: t.about.importSuccess });
+        }}
+        onCancel={() => setPendingImport(null)}
+      />
+
+      <ConfirmDialog
+        open={clearOpen}
+        title={t.about.clearTitle}
+        body={t.about.clearBody}
+        confirmLabel={t.about.clearAction}
+        onConfirm={() => {
+          clearAll();
+          setClearOpen(false);
+        }}
+        onCancel={() => setClearOpen(false)}
+      />
+    </div>
+  );
+}

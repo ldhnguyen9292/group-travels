@@ -1,247 +1,149 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-
-const translations = {
-  en: {
-    groupTravel: 'Group Travel',
-    trips: 'Trips',
-    about: 'About',
-    help: 'Help',
-    language: 'Language',
-    profile: 'Profile',
-    settings: 'Settings',
-    signOut: 'Sign out',
-    member: 'Member',
-    dark: 'Dark',
-    light: 'Light',
-    english: 'English',
-    vietnamese: 'Tiếng Việt',
-    show: 'Show',
-    hide: 'Hide',
-    account: 'Account',
-  },
-  vn: {
-    groupTravel: 'Đi chung nhóm',
-    trips: 'Chuyến đi',
-    about: 'Giới thiệu',
-    help: 'Trợ giúp',
-    language: 'Ngôn ngữ',
-    profile: 'Hồ sơ',
-    settings: 'Cài đặt',
-    signOut: 'Đăng xuất',
-    member: 'Thành viên',
-    dark: 'Tối',
-    light: 'Sáng',
-    english: 'English',
-    vietnamese: 'Tiếng Việt',
-    show: 'Hiện',
-    hide: 'Ẩn',
-    account: 'Tài khoản',
-  },
-};
-
-type Translation = (typeof translations)['en'];
-
-const Logo: React.FC<{ t: Translation }> = ({ t }) => (
-  <span className="inline-flex items-center gap-2">
-    <img src="/group-travel-logo.svg" alt="Group Travel Logo" className="w-10 h-10" />
-    <span className="text-lg font-semibold">{t.groupTravel}</span>
-  </span>
-);
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useI18n } from '../i18n/context';
+import { LANGS } from '../i18n/dictionary';
+import { useTheme } from '../theme/context';
+import Button from './ui/Button';
+import { IconClose, IconMenu, IconMoon, IconSun } from './ui/Icons';
+import { cx } from './ui/classes';
 
 const NAV = [
   { to: '/', key: 'trips' },
   { to: '/about', key: 'about' },
   { to: '/help', key: 'help' },
-];
+] as const;
 
-const Header: React.FC = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [lang, setLang] = useState<string>(() => localStorage.getItem('lang') || 'en');
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
-    }
-    return 'dark';
-  });
+export default function Header() {
+  const { t, lang, setLang } = useI18n();
+  const { theme, toggleTheme } = useTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const location = useLocation();
 
-  // === Theme logic ===
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  const mobileRef = useRef<HTMLDivElement | null>(null);
+  // Navigating away should never leave the panel hanging open.
+  useEffect(() => setMenuOpen(false), [location.pathname]);
 
   useEffect(() => {
-    localStorage.setItem('lang', lang);
-    window.dispatchEvent(new CustomEvent('app:language-changed', { detail: { lang } }));
-  }, [lang]);
-
-  const closeMenus = useCallback(() => {
-    setMobileOpen(false);
-  }, []);
-
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      const target = e.target as Node;
-      if (mobileRef.current && !mobileRef.current.contains(target) && mobileOpen) setMobileOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeMenus();
-    }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
+    if (!menuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false);
     };
-  }, [mobileOpen, closeMenus]);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
 
-  const t = translations[lang as 'en' | 'vn'] || translations.en;
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    cx(
+      'rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors',
+      isActive ? 'bg-brand-soft text-brand' : 'text-ink-muted hover:bg-sunken hover:text-ink',
+    );
+
+  const languageSwitch = (
+    <div
+      className="flex items-center gap-0.5 rounded-lg border border-border bg-sunken p-0.5"
+      role="group"
+      aria-label={t.nav.language}
+    >
+      {LANGS.map((code) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => setLang(code)}
+          aria-pressed={lang === code}
+          className={cx(
+            'rounded-md px-2 py-1 text-xs font-semibold transition-colors',
+            lang === code
+              ? 'bg-surface text-brand shadow-sm'
+              : 'text-ink-muted hover:text-ink',
+          )}
+        >
+          {code === 'en' ? 'EN' : 'VI'}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <header className="bg-header border-b border-border">
-      <div className="container mx-auto px-4 py-3 flex items-center gap-4">
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          <Logo t={t} />
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-40 border-b border-border bg-surface/85 backdrop-blur-md"
+    >
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+          <img src="/group-travel-logo.svg" alt="" className="h-9 w-9" />
+          <span className="text-base font-semibold tracking-tight">{t.app.name}</span>
         </Link>
 
-        {/* Desktop navigation */}
-        <nav className="hidden md:flex gap-4 ml-6">
+        <nav className="ml-4 hidden items-center gap-1 md:flex">
           {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `text-sm font-medium px-2 py-1 rounded transition-colors ${
-                  isActive ? 'text-primary' : 'text-secondary'
-                } hover:text-primary`
-              }
-            >
-              {t[item.key as keyof typeof t]}
+            <NavLink key={item.to} to={item.to} end={item.to === '/'} className={navClass}>
+              {t.nav[item.key]}
             </NavLink>
           ))}
         </nav>
 
-        {/* RIGHT SIDE */}
-        <div className="ml-auto flex items-center gap-3">
-          {/* === Mobile toggle button === */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden h-9 w-9 flex items-center justify-center rounded-full border border-border bg-surface text-primary! hover:bg-surface/80 hover:text-primary-hover! transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? (
-              // Close icon (X)
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              >
-                <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            ) : (
-              // Hamburger icon
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              >
-                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="hidden sm:block">{languageSwitch}</div>
 
-          {/* === Theme toggle === */}
-          <button
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={toggleTheme}
-            aria-label={theme === 'light' ? t.dark : t.light}
-            className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-surface hover:bg-surface/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary text-primary! hover:text-primary-hover!"
+            aria-label={theme === 'dark' ? t.nav.switchToLight : t.nav.switchToDark}
+            title={theme === 'dark' ? t.nav.switchToLight : t.nav.switchToDark}
           >
-            {theme !== 'light' ? (
-              // Moon icon
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M21 12.79A9 9 0 0111.21 3a1 1 0 00-1.13 1.32A7 7 0 1019.68 14.92a1 1 0 001.32-1.13z" />
-              </svg>
+            {theme === 'dark' ? (
+              <IconSun className="h-5 w-5" />
             ) : (
-              // Sun icon
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="5" />
-                <g stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </g>
-              </svg>
+              <IconMoon className="h-5 w-5" />
             )}
-          </button>
+          </Button>
 
-          {/* === Language selector === */}
-          <div className="hidden md:flex items-center gap-2">
-            <select
-              id="lang"
-              value={lang}
-              onChange={(e) => setLang(e.target.value)}
-              className="h-8 text-sm rounded border border-surface bg-surface text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary"
-              aria-label={t.language}
-            >
-              <option value="en">{t.english}</option>
-              <option value="vn">{t.vietnamese}</option>
-            </select>
-          </div>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? t.nav.closeMenu : t.nav.openMenu}
+          >
+            {menuOpen ? <IconClose className="h-5 w-5" /> : <IconMenu className="h-5 w-5" />}
+          </Button>
         </div>
       </div>
 
-      {/* === Mobile menu === */}
-      {mobileOpen && (
-        <div ref={mobileRef} className="md:hidden border-t border-surface bg-background">
-          <div className="px-4 py-3 space-y-2">
+      {menuOpen && (
+        <div className="border-t border-border bg-surface md:hidden">
+          <div className="mx-auto max-w-6xl space-y-1 px-4 py-3">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-secondary hover:text-primary"
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  cx(
+                    'block rounded-lg px-3 py-2 text-sm font-medium',
+                    isActive ? 'bg-brand-soft text-brand' : 'text-ink hover:bg-sunken',
+                  )
+                }
               >
-                {t[item.key as keyof typeof t]}
+                {t.nav[item.key]}
               </NavLink>
             ))}
-
-            <div className="pt-2 border-t border-surface">
-              <div className="flex items-center gap-2 mt-2">
-                <select
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value)}
-                  className="h-8 rounded border border-surface bg-surface text-sm text-primary px-2 focus:outline-none focus:ring-1 focus:ring-primary w-full"
-                >
-                  <option value="en">{t.english}</option>
-                  <option value="vn">{t.vietnamese}</option>
-                </select>
-              </div>
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-3 sm:hidden">
+              <span className="text-sm text-ink-muted">{t.nav.language}</span>
+              {languageSwitch}
             </div>
           </div>
         </div>
       )}
     </header>
   );
-};
-
-export default Header;
+}
