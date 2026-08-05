@@ -8,7 +8,7 @@ import Button from './ui/Button';
 import { IconCalendar, IconPencil, IconTrash } from './ui/Icons';
 import { cx } from './ui/classes';
 
-const VISIBLE_MEMBERS = 5;
+const VISIBLE_MEMBERS = 4;
 
 export interface TripCardProps {
   trip: Trip;
@@ -36,10 +36,15 @@ export default function TripCard({
   const usedPercent = usedRatio === null ? 0 : Math.round(usedRatio * 100);
 
   return (
-    <article className="card card-interactive flex flex-col p-5">
+    /**
+     * `min-w-0`: as a grid item the card would otherwise be floored at its
+     * min-content width, and the nowrap member names below make that wider
+     * than a phone screen — the whole page then scrolls sideways.
+     */
+    <article className="card card-interactive flex min-w-0 flex-col p-5">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg leading-snug font-semibold">
+          <h3 className="text-lg leading-snug font-semibold break-words">
             <Link to={`/trip/${trip.id}`} className="hover:text-brand">
               {trip.name}
             </Link>

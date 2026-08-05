@@ -156,7 +156,7 @@ export default function TripPage() {
 
       <div className="hero flex flex-wrap items-start justify-between gap-3 px-5 py-5 sm:px-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold sm:text-3xl">{trip.name}</h1>
+          <h1 className="text-2xl font-semibold break-words sm:text-3xl">{trip.name}</h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
             <span className="inline-flex items-center gap-1.5">
               <IconCalendar className="h-3.5 w-3.5 shrink-0" />
