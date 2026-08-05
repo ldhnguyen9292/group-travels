@@ -143,6 +143,8 @@ const en = {
     markAsContributionHint:
       'Tick this when the payer used their own cash instead of the group fund.',
     perPerson: 'each',
+    /** Stands in for the member list when an expense was split across the whole group. */
+    everyone: 'everyone',
     splits: 'Split',
     showSplits: 'Show split',
     hideSplits: 'Hide split',
@@ -166,6 +168,8 @@ const en = {
     net: 'Balance',
     paidOutOfPocket: 'Paid directly',
     paidOutOfPocketHint: 'Expenses this member handed over the money for.',
+    /** Precedes the whole bill a share was taken from: "40,000 ₫ · of 120,000 ₫". */
+    ofTotal: 'of',
     contributionsTitle: 'Payments into the fund',
     contributionsEmpty: 'No payments into the fund.',
     sharesTitle: 'Breakdown of their share',
@@ -407,6 +411,7 @@ const vn: Dictionary = {
     markAsContribution: 'Tính đây là tiền người thanh toán đã góp',
     markAsContributionHint: 'Chọn khi người thanh toán dùng tiền của mình thay vì tiền quỹ.',
     perPerson: 'mỗi người',
+    everyone: 'cả nhóm',
     splits: 'Chia',
     showSplits: 'Xem chi tiết chia',
     hideSplits: 'Ẩn chi tiết chia',
@@ -430,6 +435,7 @@ const vn: Dictionary = {
     net: 'Số dư',
     paidOutOfPocket: 'Đã trực tiếp trả',
     paidOutOfPocketHint: 'Những khoản chi do thành viên này đứng ra trả.',
+    ofTotal: 'trong tổng',
     contributionsTitle: 'Các lần góp quỹ',
     contributionsEmpty: 'Chưa góp tiền vào quỹ.',
     sharesTitle: 'Chi tiết phần phải chịu',

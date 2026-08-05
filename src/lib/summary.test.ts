@@ -50,14 +50,61 @@ const expenses: Expense[] = [
   },
 ];
 
+/** Second expense: paid by someone else, uneven, and not everybody is in it. */
+const taxi: Expense = {
+  id: 'e2',
+  tripId: 't1',
+  description: 'Taxi',
+  amount: 200_000,
+  paidById: 'b',
+  splitType: 'custom',
+  splits: [
+    { participantId: 'b', amount: 150_000 },
+    { participantId: 'c', amount: 50_000 },
+  ],
+  date: '2025-10-04',
+  createdAt: '2025-10-04T00:00:00.000Z',
+  updatedAt: '2025-10-04T00:00:00.000Z',
+};
+
+/** Two people out of three, splitting evenly. */
+const coffee: Expense = {
+  ...taxi,
+  id: 'e3',
+  description: 'Coffee',
+  amount: 60_000,
+  paidById: 'c',
+  splitType: 'equal',
+  splits: [
+    { participantId: 'a', amount: 30_000 },
+    { participantId: 'c', amount: 30_000 },
+  ],
+  date: '2025-10-05',
+  createdAt: '2025-10-05T00:00:00.000Z',
+  updatedAt: '2025-10-05T00:00:00.000Z',
+};
+
 const en = { t: DICTIONARIES.en, locale: LOCALES.en };
 const vn = { t: DICTIONARIES.vn, locale: LOCALES.vn };
 
 const totals = computeTotals(trip, expenses, contributions);
 const balances = computeBalances(trip, expenses, contributions);
 
+/** The bullets under one heading, e.g. everything below "Expenses (3):". */
+function blockAfter(text: string, heading: string): string[] {
+  const lines = text.split('\n');
+  const start = lines.findIndex((line) => line.startsWith(heading));
+  if (start < 0) return [];
+  const block: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (!line.startsWith('• ')) break;
+    block.push(line);
+  }
+  return block;
+}
+
 describe('buildTripSummary', () => {
-  const text = buildTripSummary(trip, totals, balances, en);
+  const text = buildTripSummary(trip, totals, balances, expenses, en);
 
   it('leads with the trip and its dates', () => {
     expect(text.split('\n')[0]).toContain('Da Nang');
@@ -71,10 +118,7 @@ describe('buildTripSummary', () => {
   });
 
   it('lists whoever owes the most first, ties alphabetically, nobody missing', () => {
-    const listed = text
-      .split('\n')
-      .filter((line) => line.startsWith('• '))
-      .map((line) => line.slice(2).split(' — ')[0]);
+    const listed = blockAfter(text, 'Who is up').map((line) => line.slice(2).split(' — ')[0]);
     const expected = [...balances]
       .sort((a, b) => a.net - b.net || a.participant.name.localeCompare(b.participant.name))
       .map((balance) => balance.participant.name);
@@ -89,22 +133,103 @@ describe('buildTripSummary', () => {
   });
 
   it('translates completely — no English leaks into the Vietnamese version', () => {
-    const vietnamese = buildTripSummary(trip, totals, balances, vn);
+    const vietnamese = buildTripSummary(trip, totals, balances, expenses, vn);
     expect(vietnamese).toContain('Quỹ còn lại');
     expect(vietnamese).toContain('Còn nợ');
+    expect(vietnamese).toContain('Chia: cả nhóm');
     expect(vietnamese).not.toContain('Left in the fund');
     expect(vietnamese).not.toContain('Owes');
+    expect(vietnamese).not.toContain('everyone');
   });
 
   it('omits the dates line separator when the trip has no dates', () => {
-    const undated = buildTripSummary({ ...trip, startDate: undefined, endDate: undefined }, totals, balances, en);
+    const undated = buildTripSummary(
+      { ...trip, startDate: undefined, endDate: undefined },
+      totals,
+      balances,
+      expenses,
+      en,
+    );
     expect(undated.split('\n')[0]).toBe('Da Nang');
   });
 
   it('drops the balances block for a trip with no members', () => {
     const empty = { ...trip, participants: [] };
-    const text2 = buildTripSummary(empty, computeTotals(empty, [], []), [], en);
+    const text2 = buildTripSummary(empty, computeTotals(empty, [], []), [], [], en);
     expect(text2).not.toContain('•');
+  });
+});
+
+describe('buildTripSummary — the expenses', () => {
+  const all = [...expenses, taxi, coffee];
+  const text = buildTripSummary(
+    trip,
+    computeTotals(trip, all, contributions),
+    computeBalances(trip, all, contributions),
+    all,
+    en,
+  );
+  const block = blockAfter(text, 'Expenses');
+
+  it('says how many there are, and lists every one of them once', () => {
+    expect(text).toContain('Expenses (3):');
+    expect(block).toHaveLength(3);
+  });
+
+  it('reads forwards in time, whatever order it was handed', () => {
+    const reversed = buildTripSummary(
+      trip,
+      computeTotals(trip, all, contributions),
+      computeBalances(trip, all, contributions),
+      [...all].reverse(),
+      en,
+    );
+    expect(blockAfter(reversed, 'Expenses')).toEqual(block);
+    expect(block.map((line) => line.split(' — ')[0])).toEqual(['• Dinner', '• Taxi', '• Coffee']);
+  });
+
+  it('keeps one expense to one line: total, date, payer, split', () => {
+    expect(block[0]).toBe(
+      '• Dinner — ₫300,000 · Oct 03, 2025 · Paid by: An · Split: everyone (₫100,000 each)',
+    );
+  });
+
+  it('states an even split once instead of repeating the same number per person', () => {
+    // Only An and Chi drank coffee, so they are named — but the amount is said once.
+    expect(block[2]).toContain('Split: An, Chi (₫30,000 each)');
+  });
+
+  it('names every share when the amounts differ', () => {
+    expect(block[1]).toContain('Split: Binh ₫150,000, Chi ₫50,000');
+  });
+
+  it('names each share when an even split leaves a rounding penny with one person', () => {
+    const odd: Expense = {
+      ...coffee,
+      splits: [
+        { participantId: 'a', amount: 30_001 },
+        { participantId: 'c', amount: 29_999 },
+      ],
+      amount: 60_000,
+    };
+    const oneOff = buildTripSummary(trip, totals, balances, [odd], en);
+    expect(oneOff).toContain('Split: An ₫30,001, Chi ₫29,999');
+    expect(oneOff).not.toContain('each');
+  });
+
+  it('falls back to the unknown-member label for a share with no member left', () => {
+    const orphan: Expense = {
+      ...taxi,
+      paidById: 'gone',
+      splits: [{ participantId: 'gone', amount: 200_000 }],
+    };
+    const text2 = buildTripSummary(trip, totals, balances, [orphan], en);
+    expect(text2).toContain('Paid by: Unknown member');
+    expect(text2).toContain('Split: Unknown member ₫200,000');
+  });
+
+  it('leaves the expenses block out entirely when nothing was spent', () => {
+    expect(buildTripSummary(trip, totals, balances, [], en)).not.toContain('Expenses');
   });
 });
 
@@ -136,6 +261,12 @@ describe('buildParticipantSummary', () => {
     );
     expect(text).toContain('Gets back');
     expect(text).toContain('+');
+  });
+
+  it('puts their own share first, then the bill it came out of and who paid it', () => {
+    const balance = findBalance(balances, 'c');
+    const text = buildParticipantSummary(trip, balance!, [], participantShares(expenses, 'c'), en);
+    expect(text).toContain('• Dinner — ₫100,000 · Oct 03, 2025 · of ₫300,000 · Paid by: An');
   });
 
   it('leaves out empty sections', () => {

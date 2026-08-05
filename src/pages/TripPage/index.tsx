@@ -322,7 +322,7 @@ export default function TripPage() {
       <ShareDialog
         open={activeModal === 'share'}
         subject={trip.name}
-        text={buildTripSummary(trip, totals, balances, { t, locale })}
+        text={buildTripSummary(trip, totals, balances, expenses, { t, locale })}
         onClose={closeModal}
       />
 
