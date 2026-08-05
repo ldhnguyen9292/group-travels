@@ -5,6 +5,7 @@ import ContributionForm from '../../components/ContributionForm';
 import ContributionList from '../../components/ContributionList';
 import ExpenseForm from '../../components/ExpenseForm';
 import ExpenseList from '../../components/ExpenseList';
+import ExpenseTable from '../../components/ExpenseTable';
 import ShareDialog from '../../components/ShareDialog';
 import TripForm from '../../components/TripForm';
 import Button from '../../components/ui/Button';
@@ -14,11 +15,13 @@ import {
   IconAlert,
   IconArrowLeft,
   IconCalendar,
+  IconList,
   IconPencil,
   IconPlus,
   IconReceipt,
   IconScale,
   IconShare,
+  IconTable,
   IconUsers,
   IconWallet,
 } from '../../components/ui/Icons';
@@ -41,6 +44,9 @@ import type {
 } from '../../types/trip';
 
 type ActiveModal = 'trip' | 'contribution' | 'expense' | 'share' | null;
+
+/** The list edits, the table checks. Whichever is open is a per-visit choice. */
+type ExpenseView = 'list' | 'table';
 
 type PendingDelete = { kind: 'contribution' | 'expense'; id: ID } | null;
 
@@ -89,6 +95,7 @@ export default function TripPage() {
   const [editingContribution, setEditingContribution] = useState<Contribution | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
+  const [expenseView, setExpenseView] = useState<ExpenseView>('list');
 
   const totals = useMemo(
     () => (trip ? computeTotals(trip, expenses, contributions) : null),
@@ -265,9 +272,41 @@ export default function TripPage() {
         )}
       </Section>
 
-      <Section icon={<IconReceipt className="h-4 w-4" />} title={t.expense.title}>
+      <Section
+        icon={<IconReceipt className="h-4 w-4" />}
+        title={t.expense.title}
+        action={
+          expenses.length > 0 && (
+            <div className="flex gap-1" role="group" aria-label={t.expense.view}>
+              <Button
+                variant={expenseView === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                aria-pressed={expenseView === 'list'}
+                onClick={() => setExpenseView('list')}
+              >
+                <IconList className="h-4 w-4" />
+                {t.expense.viewList}
+              </Button>
+              <Button
+                variant={expenseView === 'table' ? 'secondary' : 'ghost'}
+                size="sm"
+                aria-pressed={expenseView === 'table'}
+                onClick={() => setExpenseView('table')}
+              >
+                <IconTable className="h-4 w-4" />
+                {t.expense.viewTable}
+              </Button>
+            </div>
+          )
+        }
+      >
         {expenses.length === 0 ? (
           <EmptyState title={t.expense.empty} compact />
+        ) : expenseView === 'table' ? (
+          <>
+            <p className="mb-2 text-xs text-ink-muted">{t.expense.tableHint}</p>
+            <ExpenseTable trip={trip} expenses={expenses} />
+          </>
         ) : (
           <ExpenseList
             trip={trip}

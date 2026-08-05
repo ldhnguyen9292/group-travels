@@ -163,6 +163,23 @@ export function IconCoins({ className }: IconProps) {
   );
 }
 
+export function IconList({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />
+    </Outline>
+  );
+}
+
+export function IconTable({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <rect x="3.25" y="4.75" width="17.5" height="14.5" rx="2" />
+      <path d="M3.25 9.5h17.5M9.5 9.5v9.75M15 9.5v9.75" />
+    </Outline>
+  );
+}
+
 export function IconCalendar({ className }: IconProps) {
   return (
     <Outline className={className}>

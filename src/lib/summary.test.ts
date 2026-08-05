@@ -136,10 +136,10 @@ describe('buildTripSummary', () => {
     const vietnamese = buildTripSummary(trip, totals, balances, expenses, vn);
     expect(vietnamese).toContain('Quỹ còn lại');
     expect(vietnamese).toContain('Còn nợ');
-    expect(vietnamese).toContain('Chia: cả nhóm');
+    expect(vietnamese).toContain('An trả');
     expect(vietnamese).not.toContain('Left in the fund');
     expect(vietnamese).not.toContain('Owes');
-    expect(vietnamese).not.toContain('everyone');
+    expect(vietnamese).not.toContain('paid');
   });
 
   it('omits the dates line separator when the trip has no dates', () => {
@@ -185,51 +185,40 @@ describe('buildTripSummary — the expenses', () => {
       en,
     );
     expect(blockAfter(reversed, 'Expenses')).toEqual(block);
-    expect(block.map((line) => line.split(' — ')[0])).toEqual(['• Dinner', '• Taxi', '• Coffee']);
+    expect(block.map((line) => line.split(' — ')[0])).toEqual([
+      '• 10/03 Dinner',
+      '• 10/04 Taxi',
+      '• 10/05 Coffee',
+    ]);
   });
 
-  it('keeps one expense to one line: total, date, payer, split', () => {
-    expect(block[0]).toBe(
-      '• Dinner — ₫300,000 · Oct 03, 2025 · Paid by: An · Split: everyone (₫100,000 each)',
-    );
+  it('is the bill and nothing else: day, what for, how much, who fronted it', () => {
+    expect(block[0]).toBe('• 10/03 Dinner — ₫300,000 · An paid');
+    expect(block[1]).toBe('• 10/04 Taxi — ₫200,000 · Binh paid');
   });
 
-  it('states an even split once instead of repeating the same number per person', () => {
-    // Only An and Chi drank coffee, so they are named — but the amount is said once.
-    expect(block[2]).toContain('Split: An, Chi (₫30,000 each)');
+  it('leaves the per-expense split to each member’s own statement', () => {
+    // Chi is in two of these three expenses, but her share is not spelled out here.
+    expect(text).not.toContain('₫50,000');
+    expect(text).not.toContain('each');
   });
 
-  it('names every share when the amounts differ', () => {
-    expect(block[1]).toContain('Split: Binh ₫150,000, Chi ₫50,000');
+  it('drops the day rather than the line when an expense has no usable date', () => {
+    const undated = buildTripSummary(trip, totals, balances, [{ ...taxi, date: '' }], en);
+    expect(undated).toContain('• Taxi — ₫200,000 · Binh paid');
   });
 
-  it('names each share when an even split leaves a rounding penny with one person', () => {
-    const odd: Expense = {
-      ...coffee,
-      splits: [
-        { participantId: 'a', amount: 30_001 },
-        { participantId: 'c', amount: 29_999 },
-      ],
-      amount: 60_000,
-    };
-    const oneOff = buildTripSummary(trip, totals, balances, [odd], en);
-    expect(oneOff).toContain('Split: An ₫30,001, Chi ₫29,999');
-    expect(oneOff).not.toContain('each');
-  });
-
-  it('falls back to the unknown-member label for a share with no member left', () => {
-    const orphan: Expense = {
-      ...taxi,
-      paidById: 'gone',
-      splits: [{ participantId: 'gone', amount: 200_000 }],
-    };
-    const text2 = buildTripSummary(trip, totals, balances, [orphan], en);
-    expect(text2).toContain('Paid by: Unknown member');
-    expect(text2).toContain('Split: Unknown member ₫200,000');
+  it('falls back to the unknown-member label when the payer is no longer a member', () => {
+    const orphan = buildTripSummary(trip, totals, balances, [{ ...taxi, paidById: 'gone' }], en);
+    expect(orphan).toContain('Unknown member paid');
   });
 
   it('leaves the expenses block out entirely when nothing was spent', () => {
     expect(buildTripSummary(trip, totals, balances, [], en)).not.toContain('Expenses');
+  });
+
+  it('ends on the note about the balances, so neither list is interrupted', () => {
+    expect(text.trim().endsWith('(Paid in minus their share of the spending)')).toBe(true);
   });
 });
 
@@ -266,7 +255,7 @@ describe('buildParticipantSummary', () => {
   it('puts their own share first, then the bill it came out of and who paid it', () => {
     const balance = findBalance(balances, 'c');
     const text = buildParticipantSummary(trip, balance!, [], participantShares(expenses, 'c'), en);
-    expect(text).toContain('• Dinner — ₫100,000 · Oct 03, 2025 · of ₫300,000 · Paid by: An');
+    expect(text).toContain('• 10/03 Dinner — ₫100,000 · of ₫300,000 · An paid');
   });
 
   it('leaves out empty sections', () => {

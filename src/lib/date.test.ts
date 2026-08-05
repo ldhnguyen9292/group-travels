@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateRange, isBefore, normaliseDate, parseDate, toISODate } from './date';
+import {
+  formatDateRange,
+  formatShortDate,
+  isBefore,
+  normaliseDate,
+  parseDate,
+  toISODate,
+} from './date';
 
 describe('parseDate', () => {
   it('reads plain dates in the local timezone, not UTC', () => {
@@ -35,6 +42,18 @@ describe('formatDateRange', () => {
     expect(formatDateRange('2025-10-24', undefined, 'en-US')).not.toContain('–');
     expect(formatDateRange(undefined, undefined, 'en-US')).toBe('');
     expect(formatDateRange('2025-10-24', '2025-10-26', 'en-US')).toContain('–');
+  });
+});
+
+describe('formatShortDate', () => {
+  it('drops the year and follows the reader’s day/month order', () => {
+    expect(formatShortDate('2025-10-24', 'vi-VN')).toBe('24/10');
+    expect(formatShortDate('2025-10-24', 'en-US')).toBe('10/24');
+  });
+
+  it('gives back nothing for a date it cannot read, so callers can leave it out', () => {
+    expect(formatShortDate('', 'en-US')).toBe('');
+    expect(formatShortDate(undefined, 'en-US')).toBe('');
   });
 });
 

@@ -38,6 +38,25 @@ export function formatDate(value: string | undefined, locale: string): string {
   return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+/**
+ * Day and month only, in the reader's own order: "24/10" in Vietnamese, "10/24"
+ * in en-US. For lists inside a summary that already names the trip and its
+ * dates — repeating the year on every line is noise.
+ *
+ * The order comes from the locale but the slash does not: vi-VN formats this as
+ * "24-10", which reads like a range rather than a date.
+ */
+export function formatShortDate(value: string | undefined, locale: string): string {
+  const date = parseDate(value);
+  if (!date) return '';
+  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit' };
+  const parts = new Intl.DateTimeFormat(locale, options)
+    .formatToParts(date)
+    .filter((part) => part.type === 'day' || part.type === 'month')
+    .map((part) => part.value);
+  return parts.length === 2 ? parts.join('/') : date.toLocaleDateString(locale, options);
+}
+
 export function formatDateRange(
   start: string | undefined,
   end: string | undefined,

@@ -7,8 +7,8 @@ import type {
   Trip,
   TripTotals,
 } from '../types/trip';
-import { formatDate, formatDateRange } from './date';
-import { formatMoney, formatMoneySigned, toMinorUnits } from './money';
+import { formatDateRange, formatShortDate } from './date';
+import { formatMoney, formatMoneySigned } from './money';
 import { nameOf, participantNames } from './participants';
 
 export interface SummaryContext {
@@ -21,8 +21,13 @@ export interface SummaryContext {
  *
  * Deliberately no space-padded columns: Zalo, Messenger and most chat apps use a
  * proportional font, so padding does not line up and only adds noise. One fact
- * per line survives everywhere — including the expenses, which stay one line
- * each instead of nesting their split underneath.
+ * per line survives everywhere.
+ *
+ * The trip summary lists the bill — what was spent and who fronted it — and
+ * stops there. Who owes what is already answered by the balances above it, and
+ * spelling out every expense's split as well makes the message too long to read
+ * on a phone. That breakdown belongs in a member's own statement, where it is
+ * about one person.
  */
 function netLabel(net: number, t: Dictionary): string {
   if (net > 0) return t.trip.getsBack;
@@ -46,46 +51,14 @@ function joinFacts(parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(' · ');
 }
 
-/**
- * Who carried this expense and for how much.
- *
- * An even split is stated once ("100,000 ₫ each") instead of repeating the same
- * number per person, and shrinks to "everyone" when nobody was left out — that
- * is the usual case, and spelling out the whole group on every line is the
- * fastest way to make a bill unreadable. Anything else is listed name by name,
- * which also covers the odd leftover unit an even split hands to one person.
- */
-function describeSplit(expense: Expense, trip: Trip, names: Map<ID, string>, { t, locale }: SummaryContext): string {
-  const { splits } = expense;
-  if (splits.length === 0) return '';
-
-  const money = (value: number) => formatMoney(value, trip.currency, locale);
-  const who = (id: ID) => nameOf(names, id, t.common.unknown);
-  const first = toMinorUnits(splits[0].amount, trip.currency);
-  const even =
-    splits.length > 1 &&
-    splits.every((split) => toMinorUnits(split.amount, trip.currency) === first);
-
-  if (!even) {
-    return splits.map((split) => `${who(split.participantId)} ${money(split.amount)}`).join(', ');
-  }
-
-  const ids = new Set(splits.map((split) => split.participantId));
-  const wholeGroup = ids.size === trip.participants.length && [...ids].every((id) => names.has(id));
-  const people = wholeGroup ? t.expense.everyone : splits.map((split) => who(split.participantId)).join(', ');
-  return `${people} (${money(splits[0].amount)} ${t.expense.perPerson})`;
+/** "24/10 Dinner — 300,000 ₫", the opening of every line in a money list. */
+function entry(date: string, label: string, amount: string, locale: string): string {
+  const day = formatShortDate(date, locale);
+  return `• ${day ? `${day} ${label}` : label} — ${amount}`;
 }
 
-/** One expense, one line: what it was, how much, when, who paid, how it was split. */
-function expenseLine(expense: Expense, trip: Trip, names: Map<ID, string>, context: SummaryContext): string {
-  const { t, locale } = context;
-  const split = describeSplit(expense, trip, names, context);
-  return `• ${expense.description} — ${joinFacts([
-    formatMoney(expense.amount, trip.currency, locale),
-    formatDate(expense.date, locale),
-    `${t.expense.paidBy}: ${nameOf(names, expense.paidById, t.common.unknown)}`,
-    split && `${t.expense.splits}: ${split}`,
-  ])}`;
+function paidBy(payerId: ID, names: Map<ID, string>, t: Dictionary): string {
+  return `${nameOf(names, payerId, t.common.unknown)} ${t.expense.paid}`;
 }
 
 export function buildTripSummary(
@@ -93,9 +66,8 @@ export function buildTripSummary(
   totals: TripTotals,
   balances: ParticipantBalance[],
   expenses: Expense[],
-  context: SummaryContext,
+  { t, locale }: SummaryContext,
 ): string {
-  const { t, locale } = context;
   const money = (value: number) => formatMoney(value, trip.currency, locale);
   const dates = formatDateRange(trip.startDate, trip.endDate, locale);
   const lines: string[] = [dates ? `${trip.name} · ${dates}` : trip.name, ''];
@@ -113,16 +85,23 @@ export function buildTripSummary(
           : `• ${balance.participant.name} — ${netLabel(balance.net, t)}: ${money(Math.abs(balance.net))}`,
       );
     }
-    lines.push(`(${t.trip.balancesHint.replace(/\.$/, '')})`);
   }
 
   if (expenses.length > 0) {
     const names = participantNames(trip);
     lines.push('', `${t.expense.title} (${expenses.length}):`);
     for (const expense of [...expenses].sort(byOldest)) {
-      lines.push(expenseLine(expense, trip, names, context));
+      lines.push(
+        joinFacts([
+          entry(expense.date, expense.description, money(expense.amount), locale),
+          paidBy(expense.paidById, names, t),
+        ]),
+      );
     }
   }
+
+  // Closes the message, so neither list is interrupted by a footnote.
+  if (balances.length > 0) lines.push('', `(${t.trip.balancesHint.replace(/\.$/, '')})`);
 
   return lines.join('\n');
 }
@@ -135,6 +114,7 @@ export function buildParticipantSummary(
   { t, locale }: SummaryContext,
 ): string {
   const money = (value: number) => formatMoney(value, trip.currency, locale);
+  const names = participantNames(trip);
   const lines: string[] = [`${trip.name} — ${balance.participant.name}`, ''];
 
   lines.push(`${t.participants.paidIn}: ${money(balance.contributed)}`);
@@ -146,22 +126,21 @@ export function buildParticipantSummary(
   if (contributions.length > 0) {
     lines.push('', `${t.participants.contributionsTitle}:`);
     for (const contribution of [...contributions].sort(byOldest)) {
-      lines.push(`• ${formatDate(contribution.date, locale)} — ${money(contribution.amount)}`);
+      const day = formatShortDate(contribution.date, locale);
+      lines.push(`• ${day ? `${day} — ` : ''}${money(contribution.amount)}`);
     }
   }
 
   if (shares.length > 0) {
-    const names = participantNames(trip);
     lines.push('', `${t.participants.sharesTitle}:`);
     for (const { expense, amount } of [...shares].sort((a, b) => byOldest(a.expense, b.expense))) {
-      // Their own share first, then the whole bill it came out of.
+      // Their own share first, then the whole bill it was taken out of.
       lines.push(
-        `• ${expense.description} — ${joinFacts([
-          money(amount),
-          formatDate(expense.date, locale),
+        joinFacts([
+          entry(expense.date, expense.description, money(amount), locale),
           `${t.participants.ofTotal} ${money(expense.amount)}`,
-          `${t.expense.paidBy}: ${nameOf(names, expense.paidById, t.common.unknown)}`,
-        ])}`,
+          paidBy(expense.paidById, names, t),
+        ]),
       );
     }
   }
