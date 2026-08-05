@@ -1,15 +1,9 @@
-import { useMemo } from 'react';
 import { useI18n } from '../i18n/context';
-import { computeBalances, computeTotals } from '../lib/balances';
-import { formatShortDate } from '../lib/date';
-import { formatMoney } from '../lib/money';
-import { nameOf, participantNames } from '../lib/participants';
-import type { Expense, Trip } from '../types/trip';
+import type { ExpenseMatrix } from '../lib/expenseMatrix';
 import { cx } from './ui/classes';
 
 export interface ExpenseTableProps {
-  trip: Trip;
-  expenses: Expense[];
+  matrix: ExpenseMatrix;
 }
 
 /**
@@ -22,6 +16,8 @@ export interface ExpenseTableProps {
  */
 const PINNED = 'sticky left-0 z-10 bg-surface shadow-[inset_-1px_0_0_var(--color-border)]';
 
+const CELL = 'px-3 py-2.5 text-right whitespace-nowrap';
+
 /**
  * Every expense against every member, for checking rather than editing.
  *
@@ -32,83 +28,68 @@ const PINNED = 'sticky left-0 z-10 bg-surface shadow-[inset_-1px_0_0_var(--color
  * Deliberately unpaginated: a total under a page-worth of rows would be a lie
  * about the trip, and checking is the only reason to open this view.
  */
-export default function ExpenseTable({ trip, expenses }: ExpenseTableProps) {
-  const { t, locale } = useI18n();
-  const names = useMemo(() => participantNames(trip), [trip]);
-  // No contributions: this table is about spending, so a column is a member's share.
-  const columns = useMemo(() => computeBalances(trip, expenses, []), [trip, expenses]);
-  const grandTotal = useMemo(() => computeTotals(trip, expenses, []).expenses, [trip, expenses]);
-
-  const money = (value: number) => formatMoney(value, trip.currency, locale);
-  const cell = 'px-3 py-2.5 text-right whitespace-nowrap';
+export default function ExpenseTable({ matrix }: ExpenseTableProps) {
+  const { t } = useI18n();
 
   return (
-    // No padding on the scroll box: a sticky column pins to the scrollport edge,
-    // so padding here would let the pinned cell ride over it when scrolled.
-    <div className="overflow-x-auto">
+    /*
+     * `relative` is load-bearing: the `sr-only` labels in the empty cells are
+     * absolutely positioned, and without a positioned scroll box they resolve
+     * against the viewport, escape the clip, and drag the whole page sideways
+     * on a phone. No padding here either — a sticky column pins to the
+     * scrollport edge, so padding would let the pinned cell ride over it.
+     */
+    <div className="relative overflow-x-auto">
       <table className="w-full min-w-max border-collapse text-sm">
         <thead>
           <tr className="border-b border-border text-xs text-ink-muted">
             <th scope="col" className={cx(PINNED, 'px-3 py-2.5 text-left font-medium')}>
-              {t.expense.title}
+              {matrix.firstHeader}
             </th>
-            {columns.map(({ participant }) => (
-              <th key={participant.id} scope="col" className={cx(cell, 'font-medium')}>
-                {participant.name}
+            {[...matrix.columns, matrix.totalHeader].map((name) => (
+              <th key={name} scope="col" className={cx(CELL, 'font-medium')}>
+                {name}
               </th>
             ))}
-            <th scope="col" className={cx(cell, 'font-medium')}>
-              {t.expense.total}
-            </th>
           </tr>
         </thead>
 
         <tbody className="divide-y divide-border">
-          {expenses.map((expense) => {
-            const shares = new Map(expense.splits.map((split) => [split.participantId, split.amount]));
-            return (
-              <tr key={expense.id}>
-                <th scope="row" className={cx(PINNED, 'px-3 py-2.5 text-left font-medium')}>
-                  <span className="block max-w-[14rem] truncate">{expense.description}</span>
-                  <span className="block text-xs font-normal text-ink-muted">
-                    {formatShortDate(expense.date, locale)} ·{' '}
-                    {nameOf(names, expense.paidById, t.common.unknown)} {t.expense.paid}
-                  </span>
-                </th>
-                {columns.map(({ participant }) => {
-                  const share = shares.get(participant.id);
-                  return (
-                    <td key={participant.id} className={cx(cell, 'money')}>
-                      {share === undefined ? (
-                        <>
-                          <span aria-hidden="true" className="text-ink-muted">
-                            —
-                          </span>
-                          <span className="sr-only">{t.expense.notIncluded}</span>
-                        </>
-                      ) : (
-                        money(share)
-                      )}
-                    </td>
-                  );
-                })}
-                <td className={cx(cell, 'money font-semibold')}>{money(expense.amount)}</td>
-              </tr>
-            );
-          })}
+          {matrix.rows.map((row) => (
+            <tr key={row.key}>
+              <th scope="row" className={cx(PINNED, 'px-3 py-2.5 text-left font-medium')}>
+                <span className="block max-w-[14rem] truncate">{row.label}</span>
+                <span className="block text-xs font-normal text-ink-muted">{row.meta}</span>
+              </th>
+              {row.cells.map((cell, index) => (
+                <td key={matrix.columns[index]} className={cx(CELL, 'money')}>
+                  {cell.missing ? (
+                    <>
+                      <span aria-hidden="true" className="text-ink-muted">
+                        —
+                      </span>
+                      <span className="sr-only">{t.expense.notIncluded}</span>
+                    </>
+                  ) : (
+                    cell.text
+                  )}
+                </td>
+              ))}
+              <td className={cx(CELL, 'money font-semibold')}>{row.total}</td>
+            </tr>
+          ))}
         </tbody>
 
         <tfoot>
           <tr className="border-t-2 border-border-strong">
             <th scope="row" className={cx(PINNED, 'px-3 py-2.5 text-left font-semibold')}>
-              {t.expense.total}
+              {matrix.totalsLabel}
             </th>
-            {columns.map(({ participant, share }) => (
-              <td key={participant.id} className={cx(cell, 'money font-semibold')}>
-                {money(share)}
+            {[...matrix.totalsCells, matrix.grandTotal].map((value, index) => (
+              <td key={matrix.columns[index] ?? 'total'} className={cx(CELL, 'money font-semibold')}>
+                {value}
               </td>
             ))}
-            <td className={cx(cell, 'money font-semibold')}>{money(grandTotal)}</td>
           </tr>
         </tfoot>
       </table>

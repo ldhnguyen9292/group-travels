@@ -31,8 +31,10 @@ import { btn } from '../../components/ui/classes';
 import { useI18n } from '../../i18n/context';
 import { computeBalances, computeTotals } from '../../lib/balances';
 import { formatDateRange } from '../../lib/date';
+import { buildExpenseMatrix } from '../../lib/expenseMatrix';
 import { formatMoney } from '../../lib/money';
 import { buildTripSummary } from '../../lib/summary';
+import { imageFilename, renderExpenseMatrixImage } from '../../lib/tableImage';
 import { useLockedParticipantIds, useTrip, useTripRecords, useTripStore } from '../../store/context';
 import type {
   Contribution,
@@ -105,8 +107,14 @@ export default function TripPage() {
     () => (trip ? computeBalances(trip, expenses, contributions) : []),
     [trip, expenses, contributions],
   );
+  const dates = trip ? formatDateRange(trip.startDate, trip.endDate, locale) : '';
+  // One grid, rendered as a table on screen and as a picture in the share sheet.
+  const matrix = useMemo(
+    () => (trip ? buildExpenseMatrix(trip, expenses, dates, { t, locale }) : null),
+    [trip, expenses, dates, t, locale],
+  );
 
-  if (!trip || !totals) {
+  if (!trip || !totals || !matrix) {
     return (
       <EmptyState
         icon={<IconAlert className="h-5 w-5" />}
@@ -151,7 +159,6 @@ export default function TripPage() {
     setPendingDelete(null);
   }
 
-  const dates = formatDateRange(trip.startDate, trip.endDate, locale);
   const hasMembers = trip.participants.length > 0;
 
   return (
@@ -304,8 +311,10 @@ export default function TripPage() {
           <EmptyState title={t.expense.empty} compact />
         ) : expenseView === 'table' ? (
           <>
-            <p className="mb-2 text-xs text-ink-muted">{t.expense.tableHint}</p>
-            <ExpenseTable trip={trip} expenses={expenses} />
+            <p className="mb-2 text-xs text-ink-muted">
+              {t.expense.tableNote} {t.expense.tableScroll}
+            </p>
+            <ExpenseTable matrix={matrix} />
           </>
         ) : (
           <ExpenseList
@@ -362,6 +371,14 @@ export default function TripPage() {
         open={activeModal === 'share'}
         subject={trip.name}
         text={buildTripSummary(trip, totals, balances, expenses, { t, locale })}
+        image={
+          expenses.length > 0
+            ? {
+              create: () => renderExpenseMatrixImage(matrix),
+              filename: imageFilename(trip.name),
+            }
+            : null
+        }
         onClose={closeModal}
       />
 
