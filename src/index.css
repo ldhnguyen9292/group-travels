@@ -70,9 +70,12 @@
    * Apple asks for 44pt, Android for 48dp. Installed to a home screen this app
    * is judged as a phone app, so controls grow to meet it on touch pointers
    * while staying compact under a mouse — see the `pointer: coarse` block below.
+   * There is no way to tell the two platforms apart from here, so the standard
+   * target takes the larger figure and clears both. The small one is the floor
+   * for secondary controls and cannot go under Apple's 44 either.
    */
-  --tap-target: 2.75rem;
-  --tap-target-sm: 2.5rem;
+  --tap-target: 3rem;
+  --tap-target-sm: 2.75rem;
 
   --shadow-card: 0 1px 2px rgb(20 23 43 / 0.04), 0 10px 28px -14px rgb(20 23 43 / 0.16);
   --shadow-lift: 0 2px 4px rgb(20 23 43 / 0.05), 0 20px 40px -18px rgb(20 23 43 / 0.28);
@@ -658,6 +661,15 @@
   .checkbox {
     width: 1.375rem;
     height: 1.375rem;
+  }
+
+  /**
+   * A checkbox is tapped by its whole row, since the label wraps it — but the row
+   * is only as tall as one line of text, which lands short of the minimum. The box
+   * itself stays 22px: it is the target that has to grow, not the glyph.
+   */
+  label:has(> .checkbox) {
+    min-height: var(--tap-target-sm);
   }
 
   .back-link {

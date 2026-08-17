@@ -4,8 +4,10 @@ import { normaliseDate, todayISO } from '../lib/date';
 import { MAX_AMOUNT, currencyStep, formatMoney, readAmount, roundMoney } from '../lib/money';
 import type { Contribution, ContributionDraft, Trip } from '../types/trip';
 import Button from './ui/Button';
+import ErrorSummary from './ui/ErrorSummary';
 import Field from './ui/Field';
 import { input } from './ui/classes';
+import { collectErrors } from './ui/formErrors';
 
 export interface ContributionFormProps {
   trip: Trip;
@@ -33,6 +35,13 @@ export default function ContributionForm({
   const [amount, setAmount] = useState(contribution ? String(contribution.amount) : '');
   const [date, setDate] = useState(normaliseDate(contribution?.date, todayISO()));
   const [errors, setErrors] = useState<Errors>({});
+  const [submitCount, setSubmitCount] = useState(0);
+
+  const errorList = collectErrors([
+    [`${fieldId}-member`, errors.participantId],
+    [`${fieldId}-amount`, errors.amount],
+    [`${fieldId}-date`, errors.date],
+  ]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -51,13 +60,18 @@ export default function ContributionForm({
     if (!date) next.date = t.contribution.errorDate;
 
     setErrors(next);
-    if (!parsed.ok || Object.values(next).some(Boolean)) return;
+    if (!parsed.ok || Object.values(next).some(Boolean)) {
+      setSubmitCount((count) => count + 1);
+      return;
+    }
 
     onSubmit({ participantId, amount: roundMoney(parsed.value, trip.currency), date });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <ErrorSummary errors={errorList} submitCount={submitCount} />
+
       <Field
         id={`${fieldId}-member`}
         label={t.contribution.member}

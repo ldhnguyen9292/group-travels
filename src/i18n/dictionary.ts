@@ -48,6 +48,8 @@ const en = {
     hide: 'Hide',
     /** Followed by the formatted maximum, e.g. "…keep it under 1,000,000,000,000 ₫". */
     amountTooLarge: 'That amount is too large — keep it under',
+    /** Heads the list shown when a submit is rejected by more than one field. */
+    errorSummary: 'Please fix the following:',
   },
   home: {
     title: 'Your trips',
@@ -353,6 +355,7 @@ const vn: Dictionary = {
     show: 'Hiện',
     hide: 'Ẩn',
     amountTooLarge: 'Số tiền quá lớn — hãy nhập nhỏ hơn',
+    errorSummary: 'Vui lòng sửa các lỗi sau:',
   },
   home: {
     title: 'Chuyến đi của bạn',

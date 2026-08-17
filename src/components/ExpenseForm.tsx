@@ -14,9 +14,11 @@ import {
 } from '../lib/money';
 import type { Expense, ExpenseDraft, ExpenseSplit, ID, SplitType, Trip } from '../types/trip';
 import Button from './ui/Button';
+import ErrorSummary from './ui/ErrorSummary';
 import Field from './ui/Field';
 import { IconCheck } from './ui/Icons';
 import { cx, input } from './ui/classes';
+import { collectErrors } from './ui/formErrors';
 
 export interface ExpenseFormProps {
   trip: Trip;
@@ -57,6 +59,22 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
   });
   const [alsoContribute, setAlsoContribute] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
+  const [submitCount, setSubmitCount] = useState(0);
+
+  const attendeeId = (id: ID) => `${fieldId}-attendee-${id}`;
+  const splitId = (id: ID) => `${fieldId}-split-${id}`;
+
+  /**
+   * The last two are groups rather than single controls, so the summary aims at
+   * the first checkbox and the first amount — the place work has to restart.
+   */
+  const errorList = collectErrors([
+    [`${fieldId}-desc`, errors.description],
+    [`${fieldId}-amount`, errors.amount],
+    [`${fieldId}-paid`, errors.paidById],
+    [attendeeId(trip.participants[0]?.id ?? ''), errors.attendees],
+    [splitId(attendeeIds[0] ?? ''), errors.splits],
+  ]);
 
   const total = parseAmount(amount) ?? 0;
   const equalParts = splitEvenly(total, attendeeIds.length, trip.currency);
@@ -127,7 +145,10 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
     }
 
     setErrors(next);
-    if (!parsed.ok || Object.values(next).some(Boolean)) return;
+    if (!parsed.ok || Object.values(next).some(Boolean)) {
+      setSubmitCount((count) => count + 1);
+      return;
+    }
 
     onSubmit(
       {
@@ -144,6 +165,8 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <ErrorSummary errors={errorList} submitCount={submitCount} />
+
       <Field id={`${fieldId}-desc`} label={t.expense.description} error={errors.description}>
         <input
           id={`${fieldId}-desc`}
@@ -219,8 +242,11 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
         </label>
       )}
 
-      <div>
-        <span className="label">{t.expense.splitType}</span>
+      {/* A bare <span> labels nothing, so the pair of toggles is grouped under it. */}
+      <div role="group" aria-labelledby={`${fieldId}-split-type-label`}>
+        <span className="label" id={`${fieldId}-split-type-label`}>
+          {t.expense.splitType}
+        </span>
         <div className="grid grid-cols-2 gap-2">
           {(['equal', 'custom'] as SplitType[]).map((option) => (
             <button
@@ -241,9 +267,15 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
         </div>
       </div>
 
-      <div>
+      <div
+        role="group"
+        aria-labelledby={`${fieldId}-attendees-label`}
+        aria-describedby={errors.attendees ? `${fieldId}-attendees-error` : undefined}
+      >
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="label mb-0">{t.expense.attendees}</span>
+          <span className="label mb-0" id={`${fieldId}-attendees-label`}>
+            {t.expense.attendees}
+          </span>
           <div className="flex gap-1.5">
             <Button
               variant="ghost"
@@ -271,6 +303,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-sunken"
             >
               <input
+                id={attendeeId(person.id)}
                 type="checkbox"
                 className="checkbox"
                 checked={attendeeIds.includes(person.id)}
@@ -281,7 +314,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
           ))}
         </div>
         {errors.attendees && (
-          <p className="field-error" role="alert">
+          <p className="field-error" id={`${fieldId}-attendees-error`} role="alert">
             {errors.attendees}
           </p>
         )}
@@ -296,9 +329,18 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
       </div>
 
       {splitType === 'custom' && attendeeIds.length > 0 && (
-        <div className="rounded-xl border border-border bg-sunken p-3.5">
+        <div
+          role="group"
+          aria-labelledby={`${fieldId}-splits-label`}
+          aria-describedby={
+            errors.splits ? `${fieldId}-splits-error` : `${fieldId}-splits-hint`
+          }
+          className="rounded-xl border border-border bg-sunken p-3.5"
+        >
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <span className="text-sm font-semibold text-ink">{t.expense.custom}</span>
+            <span className="text-sm font-semibold text-ink" id={`${fieldId}-splits-label`}>
+              {t.expense.custom}
+            </span>
             <span
               className={cx(
                 'text-xs font-medium',
@@ -325,6 +367,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
                 <div key={id} className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-sm">{person.name}</span>
                   <input
+                    id={splitId(id)}
                     type="number"
                     inputMode="decimal"
                     min="0"
@@ -332,6 +375,7 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
                     step={currencyStep(trip.currency)}
                     className={input(false, 'w-32 bg-surface')}
                     value={customAmounts[id] ?? ''}
+                    aria-invalid={errors.splits ? true : undefined}
                     aria-label={`${t.expense.amount} — ${person.name}`}
                     onChange={(event) =>
                       setCustomAmounts((current) => ({ ...current, [id]: event.target.value }))
@@ -342,11 +386,13 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
             })}
           </div>
           {errors.splits ? (
-            <p className="field-error" role="alert">
+            <p className="field-error" id={`${fieldId}-splits-error`} role="alert">
               {errors.splits}
             </p>
           ) : (
-            <p className="field-hint">{t.expense.customHint}</p>
+            <p className="field-hint" id={`${fieldId}-splits-hint`}>
+              {t.expense.customHint}
+            </p>
           )}
         </div>
       )}

@@ -63,10 +63,23 @@ export default function Modal({ open, title, onClose, children, widthClass }: Mo
     if (!open) return;
     const panel = panelRef.current;
     if (!panel) return;
+
+    // Whatever opened the dialog is where focus belongs once it closes. Without
+    // this it falls back to <body>, so a keyboard user is returned to the top of
+    // the page instead of the row they were working on. Safari does not focus a
+    // button on click, hence the guard: there is nothing to come back to then.
+    const active = document.activeElement;
+    const opener = active instanceof HTMLElement && active !== document.body ? active : null;
+
     const target = panel.querySelector<HTMLElement>(
       '[data-autofocus], input:not([type="hidden"]), select, textarea',
     );
     (target ?? panel).focus();
+
+    return () => {
+      // The opener is often gone by now — deleting a row unmounts its own button.
+      if (opener?.isConnected) opener.focus();
+    };
   }, [open]);
 
   if (!open) return null;

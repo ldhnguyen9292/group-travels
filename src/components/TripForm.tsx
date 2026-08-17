@@ -5,9 +5,11 @@ import { createId } from '../lib/id';
 import { CURRENCIES, currencyLabel, defaultCurrencyForLang } from '../lib/money';
 import type { CurrencyCode, ID, Participant, Trip, TripDraft } from '../types/trip';
 import Button from './ui/Button';
+import ErrorSummary from './ui/ErrorSummary';
 import Field from './ui/Field';
 import { IconPlus, IconTrash } from './ui/Icons';
 import { input } from './ui/classes';
+import { collectErrors } from './ui/formErrors';
 
 export interface TripFormProps {
   trip?: Trip | null;
@@ -45,6 +47,17 @@ export default function TripForm({
   const [participants, setParticipants] = useState<Participant[]>(trip?.participants ?? []);
   const [draftNames, setDraftNames] = useState('');
   const [errors, setErrors] = useState<Errors>({});
+  const [submitCount, setSubmitCount] = useState(0);
+
+  const membersId = `${fieldId}-members`;
+  const membersErrorId = `${membersId}-error`;
+  const membersHintId = `${membersId}-hint`;
+
+  const errorList = collectErrors([
+    [`${fieldId}-name`, errors.name],
+    [`${fieldId}-end`, errors.dates],
+    [membersId, errors.participants],
+  ]);
 
   /** The language's own currency leads the list; names follow the reader's locale. */
   const currencyOptions = useMemo(() => {
@@ -109,7 +122,10 @@ export default function TripForm({
     if (startDate && endDate && isBefore(endDate, startDate)) next.dates = t.tripForm.errorDateOrder;
 
     setErrors(next);
-    if (Object.values(next).some(Boolean)) return;
+    if (Object.values(next).some(Boolean)) {
+      setSubmitCount((count) => count + 1);
+      return;
+    }
 
     onSubmit({
       name: name.trim(),
@@ -122,6 +138,8 @@ export default function TripForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <ErrorSummary errors={errorList} submitCount={submitCount} />
+
       <Field id={`${fieldId}-name`} label={t.tripForm.name} error={errors.name}>
         <input
           id={`${fieldId}-name`}
@@ -176,13 +194,15 @@ export default function TripForm({
       </div>
 
       <div>
-        <label className="label" htmlFor={`${fieldId}-members`}>
+        <label className="label" htmlFor={membersId}>
           {t.tripForm.members}
         </label>
         <div className="flex gap-2">
           <input
-            id={`${fieldId}-members`}
+            id={membersId}
             className={input(Boolean(errors.participants))}
+            aria-invalid={errors.participants ? true : undefined}
+            aria-describedby={errors.participants ? membersErrorId : membersHintId}
             value={draftNames}
             placeholder={t.tripForm.membersPlaceholder}
             autoComplete="off"
@@ -200,11 +220,13 @@ export default function TripForm({
           </Button>
         </div>
         {errors.participants ? (
-          <p className="field-error" role="alert">
+          <p className="field-error" id={membersErrorId} role="alert">
             {errors.participants}
           </p>
         ) : (
-          <p className="field-hint">{t.tripForm.membersHint}</p>
+          <p className="field-hint" id={membersHintId}>
+            {t.tripForm.membersHint}
+          </p>
         )}
 
         {participants.length > 0 && (
@@ -216,6 +238,7 @@ export default function TripForm({
                   <input
                     className={input(!person.name.trim())}
                     value={person.name}
+                    aria-invalid={!person.name.trim() || undefined}
                     aria-label={`${t.tripForm.members} ${index + 1}`}
                     maxLength={60}
                     onChange={(event) => renameParticipant(person.id, event.target.value)}
