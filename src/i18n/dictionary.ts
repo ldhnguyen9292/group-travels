@@ -289,6 +289,27 @@ const en = {
     storageFull:
       'Your changes could not be saved — this browser has run out of storage space for the app.',
   },
+  install: {
+    title: 'Install Group Travel',
+    blurb: 'Add it to your home screen — it opens like an app and works with no signal.',
+    action: 'Install',
+    dismiss: 'Not now',
+    iosAction: 'How to install',
+    iosTitle: 'Add to your home screen',
+    iosIntro: 'iPhone and iPad install web apps from the share menu:',
+    iosStep1: 'Tap the Share button in the browser toolbar.',
+    iosStep2: 'Scroll down the list and tap "Add to Home Screen".',
+    iosStep3: 'Tap "Add" — Group Travel then sits with your other apps.',
+    iosSafariNote: 'On iPhone the Share button is at the bottom of the screen, in the middle.',
+    iosStep2Label: 'Add to Home Screen',
+    done: 'Got it',
+  },
+  update: {
+    title: 'A new version is ready',
+    blurb: 'Reload to pick it up. Your trips are saved either way.',
+    action: 'Reload',
+    dismiss: 'Later',
+  },
 };
 
 export type Dictionary = typeof en;
@@ -568,6 +589,27 @@ const vn: Dictionary = {
   },
   errors: {
     storageFull: 'Không lưu được thay đổi — trình duyệt đã hết dung lượng dành cho ứng dụng.',
+  },
+  install: {
+    title: 'Cài Đi chung nhóm',
+    blurb: 'Thêm vào màn hình chính — mở như một ứng dụng và dùng được khi không có mạng.',
+    action: 'Cài đặt',
+    dismiss: 'Để sau',
+    iosAction: 'Cách cài đặt',
+    iosTitle: 'Thêm vào màn hình chính',
+    iosIntro: 'iPhone và iPad cài ứng dụng web từ menu chia sẻ:',
+    iosStep1: 'Nhấn nút Chia sẻ trên thanh công cụ của trình duyệt.',
+    iosStep2: 'Kéo xuống trong danh sách và chọn "Thêm vào MH chính".',
+    iosStep3: 'Nhấn "Thêm" — Đi chung nhóm sẽ nằm cùng các ứng dụng khác của bạn.',
+    iosSafariNote: 'Trên iPhone, nút Chia sẻ ở giữa cạnh dưới màn hình.',
+    iosStep2Label: 'Thêm vào MH chính',
+    done: 'Đã hiểu',
+  },
+  update: {
+    title: 'Đã có bản mới',
+    blurb: 'Tải lại để cập nhật. Dữ liệu chuyến đi của bạn vẫn được giữ nguyên.',
+    action: 'Tải lại',
+    dismiss: 'Để sau',
   },
 };
 

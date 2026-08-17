@@ -259,3 +259,32 @@ export function IconAlert({ className }: IconProps) {
     </Outline>
   );
 }
+
+/** A phone taking delivery of the app — used for "install on this device". */
+export function IconInstall({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+      <path d="M12 8v6M9.5 11.5l2.5 2.5 2.5-2.5" />
+    </Outline>
+  );
+}
+
+/** Mirrors the "Add to Home Screen" row in the iOS share sheet. */
+export function IconAddSquare({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+      <path d="M12 8.5v7M8.5 12h7" />
+    </Outline>
+  );
+}
+
+export function IconRefresh({ className }: IconProps) {
+  return (
+    <Outline className={className}>
+      <path d="M20 12a8 8 0 10-2.7 6" />
+      <path d="M20 5.5V12h-6" />
+    </Outline>
+  );
+}

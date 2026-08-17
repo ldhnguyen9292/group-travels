@@ -107,7 +107,7 @@ export default function ParticipantDetail() {
     <div className="space-y-5">
       <Link
         to={`/trip/${trip.id}/participants`}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand"
+        className="back-link"
       >
         <IconArrowLeft className="h-4 w-4" />
         {t.participants.backToMembers}

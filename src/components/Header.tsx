@@ -61,6 +61,9 @@ export default function Header() {
           aria-pressed={lang === code}
           className={cx(
             'rounded-md px-2 py-1 text-xs font-semibold transition-colors',
+            // Two 24px-tall targets sitting flush against each other are a
+            // mis-tap waiting to happen on a phone; give them room on touch.
+            'pointer-coarse:min-h-9 pointer-coarse:min-w-11 pointer-coarse:text-sm',
             lang === code
               ? 'bg-surface text-brand shadow-sm'
               : 'text-ink-muted hover:text-ink',
@@ -75,7 +78,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-xl"
+      className="safe-x safe-top sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-xl"
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">

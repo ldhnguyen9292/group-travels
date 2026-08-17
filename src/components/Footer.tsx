@@ -6,7 +6,7 @@ export default function Footer() {
   const { t } = useI18n();
 
   return (
-    <footer className="mt-12 border-t border-border bg-surface">
+    <footer className="safe-x safe-bottom mt-12 border-t border-border bg-surface">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8 text-center">
         <Link to="/" className="inline-flex items-center gap-2.5">
           <img src="/group-travel-logo.svg" alt="" className="h-8 w-8 rounded-lg" />
@@ -14,7 +14,9 @@ export default function Footer() {
         </Link>
         <p className="max-w-md text-sm leading-relaxed text-ink-muted">{t.footer.desc}</p>
         <a
-          className="link text-sm"
+          // Standalone CTA rather than a link in a sentence, so it earns a
+          // proper tap area on touch devices.
+          className="link inline-flex items-center text-sm pointer-coarse:min-h-10"
           href={mailtoLink(t.feedback.subjectFeature, t.feedback.featureTemplate)}
         >
           {t.feedback.action}

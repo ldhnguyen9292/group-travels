@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import AppPrompts from './components/AppPrompts';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import StorageWarning from './components/StorageWarning';
@@ -20,7 +21,7 @@ export default function App() {
           <BrowserRouter>
             <div className="flex min-h-screen flex-col">
               <Header />
-              <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+              <main className="safe-x mx-auto w-full max-w-6xl flex-1 px-4 py-8">
                 <StorageWarning />
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -36,6 +37,7 @@ export default function App() {
                 </Routes>
               </main>
               <Footer />
+              <AppPrompts />
             </div>
           </BrowserRouter>
         </TripStoreProvider>

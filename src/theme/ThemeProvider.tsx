@@ -42,6 +42,12 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     root.dataset.theme = theme;
     // Makes native controls (date pickers, scrollbars) follow the theme.
     root.style.colorScheme = theme;
+    // Installed to the home screen there is no browser UI to blend into, so the
+    // status bar takes this colour directly — it has to track the toggle, not
+    // just prefers-color-scheme.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#0b0e17' : '#f4f5fb');
   }, [theme]);
 
   const value = useMemo<ThemeValue>(() => ({ theme, setTheme, toggleTheme }), [theme, setTheme, toggleTheme]);

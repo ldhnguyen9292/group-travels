@@ -163,7 +163,7 @@ export default function TripPage() {
 
   return (
     <div className="space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand">
+      <Link to="/" className="back-link">
         <IconArrowLeft className="h-4 w-4" />
         {t.trip.backToTrips}
       </Link>

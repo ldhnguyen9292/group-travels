@@ -29,6 +29,19 @@ services:
         name: Cache-Control
         value: no-cache
 
+      # The service worker is now what actually serves the app offline, so a
+      # cached copy of it would pin users to an old precache list — the same
+      # trap as a cached index.html, one level down.
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /registerSW.js
+        name: Cache-Control
+        value: no-cache
+      - path: /manifest.webmanifest
+        name: Cache-Control
+        value: no-cache
+
     buildFilter:
       paths:
         - src/**

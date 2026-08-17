@@ -27,17 +27,22 @@ export interface StatTileProps {
 
 export default function StatTile({ label, value, icon, tone = 'neutral', hint }: StatTileProps) {
   return (
-    <div className="tile flex items-start gap-3">
-      {icon && <span className={cx('puck mt-0.5 h-8 w-8', PUCK_TONES[tone])}>{icon}</span>}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium tracking-wide text-ink-muted uppercase">
+    /**
+     * The icon sits on the label's row rather than in a left rail, which hands
+     * the amount the tile's full width. In a two-column grid on a 390px phone
+     * the rail left roughly 97px for the value, and a figure like ₫11,000,000
+     * broke across two lines with a single digit stranded on the second.
+     */
+    <div className="tile flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        {icon && <span className={cx('puck h-7 w-7', PUCK_TONES[tone])}>{icon}</span>}
+        {/* Wraps instead of truncating: "Paid into the fund" is not guessable from "Paid into the…". */}
+        <p className="min-w-0 text-xs font-medium tracking-wide text-ink-muted uppercase">
           {label}
         </p>
-        <p className={cx('money mt-1 text-lg font-semibold sm:text-xl', VALUE_TONES[tone])}>
-          {value}
-        </p>
-        {hint && <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>}
       </div>
+      <p className={cx('money text-lg font-semibold sm:text-xl', VALUE_TONES[tone])}>{value}</p>
+      {hint && <p className="text-xs text-ink-muted">{hint}</p>}
     </div>
   );
 }
