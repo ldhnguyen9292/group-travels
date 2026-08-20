@@ -25,6 +25,7 @@ const expenses: Expense[] = [
     description: 'Dinner',
     amount: 300_000,
     paidById: 'a',
+    paidFrom: 'fund',
     splitType: 'equal',
     splits: [
       { participantId: 'a', amount: 100_000 },
@@ -41,6 +42,7 @@ const expenses: Expense[] = [
     description: 'Taxi',
     amount: 200_000,
     paidById: 'b',
+    paidFrom: 'fund',
     splitType: 'custom',
     splits: [
       { participantId: 'b', amount: 150_000 },

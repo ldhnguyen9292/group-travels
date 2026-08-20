@@ -43,6 +43,7 @@ const expenses: Expense[] = [
     description: 'Dinner',
     amount: 300_000,
     paidById: 'a',
+    paidFrom: 'fund',
     splitType: 'equal',
     splits: [
       { participantId: 'a', amount: 100_000 },
@@ -59,6 +60,7 @@ const expenses: Expense[] = [
     description: 'Taxi',
     amount: 200_000,
     paidById: 'b',
+    paidFrom: 'fund',
     splitType: 'custom',
     splits: [
       { participantId: 'a', amount: 150_000 },
@@ -117,6 +119,52 @@ describe('computeBalances', () => {
   it('reports zero for a member with no records', () => {
     const lonely = computeBalances(trip, [], []);
     expect(lonely.every((balance) => balance.net === 0)).toBe(true);
+  });
+});
+
+describe('an expense the payer covered with their own money', () => {
+  const dinner: Expense = {
+    id: 'e3',
+    tripId: 'trip-1',
+    description: 'Dinner',
+    amount: 300_000,
+    paidById: 'a',
+    paidFrom: 'own',
+    splitType: 'equal',
+    splits: [
+      { participantId: 'a', amount: 100_000 },
+      { participantId: 'b', amount: 100_000 },
+      { participantId: 'c', amount: 100_000 },
+    ],
+    date: '2025-10-03',
+    createdAt: '2025-10-03T00:00:00.000Z',
+    updatedAt: '2025-10-03T00:00:00.000Z',
+  };
+
+  it('credits the payer, so only the people who owe them are down', () => {
+    const balances = computeBalances(trip, [dinner], []);
+    expect(findBalance(balances, 'a')).toMatchObject({
+      contributed: 300_000,
+      share: 100_000,
+      net: 200_000,
+    });
+    expect(findBalance(balances, 'b')?.net).toBe(-100_000);
+    expect(findBalance(balances, 'c')?.net).toBe(-100_000);
+  });
+
+  it('counts as money that entered the fund, so nothing is unaccounted for', () => {
+    expect(computeTotals(trip, [dinner], [])).toEqual({
+      contributions: 300_000,
+      expenses: 300_000,
+      remaining: 0,
+    });
+  });
+
+  it('keeps the books balanced alongside fund-paid expenses', () => {
+    const mixed = [...expenses, dinner];
+    const balances = computeBalances(trip, mixed, contributions);
+    const sum = balances.reduce((total, balance) => total + balance.net, 0);
+    expect(sum).toBe(computeTotals(trip, mixed, contributions).remaining);
   });
 });
 

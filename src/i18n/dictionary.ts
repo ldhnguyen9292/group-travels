@@ -122,6 +122,9 @@ const en = {
     errorMember: 'Choose who paid in.',
     errorAmount: 'Enter an amount greater than zero.',
     errorDate: 'Pick a date.',
+    /** Marks a row that comes from an expense the payer fronted, not a real entry. */
+    fromExpense: 'fronted',
+    fromExpenseHint: 'Edit these on the expense itself.',
   },
   expense: {
     title: 'Expenses',
@@ -141,9 +144,11 @@ const en = {
     allocated: 'Allocated',
     leftToAllocate: 'Left to allocate',
     overAllocated: 'Over by',
-    markAsContribution: 'Count this as money the payer put in',
-    markAsContributionHint:
-      'Tick this when the payer used their own cash instead of the group fund.',
+    paidFrom: 'Whose money was it?',
+    paidFromOwn: 'The payer’s own',
+    paidFromOwnHint: 'They fronted it, so the group owes them this back.',
+    paidFromFund: 'The group fund',
+    paidFromFundHint: 'Paid out of money the group had already put in.',
     perPerson: 'each',
     /** Follows a name in a summary line: "An paid". Not a label — see `paidBy` for that. */
     paid: 'paid',
@@ -428,6 +433,8 @@ const vn: Dictionary = {
     errorMember: 'Chọn người đã góp tiền.',
     errorAmount: 'Nhập số tiền lớn hơn 0.',
     errorDate: 'Chọn ngày.',
+    fromExpense: 'đã ứng',
+    fromExpenseHint: 'Sửa những khoản này ngay tại khoản chi.',
   },
   expense: {
     title: 'Khoản chi',
@@ -447,8 +454,11 @@ const vn: Dictionary = {
     allocated: 'Đã chia',
     leftToAllocate: 'Còn phải chia',
     overAllocated: 'Vượt quá',
-    markAsContribution: 'Tính đây là tiền người thanh toán đã góp',
-    markAsContributionHint: 'Chọn khi người thanh toán dùng tiền của mình thay vì tiền quỹ.',
+    paidFrom: 'Tiền của ai?',
+    paidFromOwn: 'Người thanh toán',
+    paidFromOwnHint: 'Họ ứng tiền trước, nên nhóm phải trả lại khoản này cho họ.',
+    paidFromFund: 'Quỹ nhóm',
+    paidFromFundHint: 'Trả bằng tiền nhóm đã góp trước đó.',
     perPerson: 'mỗi người',
     paid: 'trả',
     splits: 'Chia',

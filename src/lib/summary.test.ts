@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DICTIONARIES, LOCALES } from '../i18n/dictionary';
 import type { Contribution, Expense, Trip } from '../types/trip';
 import { computeBalances, computeTotals, findBalance, participantShares } from './balances';
+import { buildFundEntries } from './fundEntries';
 import { buildParticipantSummary, buildTripSummary } from './summary';
 
 const trip: Trip = {
@@ -38,6 +39,7 @@ const expenses: Expense[] = [
     description: 'Dinner',
     amount: 300_000,
     paidById: 'a',
+    paidFrom: 'fund',
     splitType: 'equal',
     splits: [
       { participantId: 'a', amount: 100_000 },
@@ -57,6 +59,7 @@ const taxi: Expense = {
   description: 'Taxi',
   amount: 200_000,
   paidById: 'b',
+  paidFrom: 'fund',
   splitType: 'custom',
   splits: [
     { participantId: 'b', amount: 150_000 },
@@ -74,6 +77,7 @@ const coffee: Expense = {
   description: 'Coffee',
   amount: 60_000,
   paidById: 'c',
+  paidFrom: 'fund',
   splitType: 'equal',
   splits: [
     { participantId: 'a', amount: 30_000 },
@@ -223,6 +227,36 @@ describe('buildTripSummary — the expenses', () => {
 });
 
 describe('buildParticipantSummary', () => {
+  it('itemises money the member fronted, not just their contribution records', () => {
+    /** Paid by An, split between the other two, so it cannot reach the shares list. */
+    const hotel: Expense = {
+      id: 'e9',
+      tripId: 't1',
+      description: 'Hotel',
+      amount: 400_000,
+      paidById: 'a',
+      paidFrom: 'own',
+      splitType: 'equal',
+      splits: [
+        { participantId: 'b', amount: 200_000 },
+        { participantId: 'c', amount: 200_000 },
+      ],
+      date: '2025-10-06',
+      createdAt: '2025-10-06T00:00:00.000Z',
+      updatedAt: '2025-10-06T00:00:00.000Z',
+    };
+    const all = [...expenses, hotel];
+    const balance = findBalance(computeBalances(trip, all, contributions), 'a');
+    expect(balance?.contributed).toBe(1_000_000);
+
+    const entries = buildFundEntries(all, contributions).filter(
+      (item) => item.participantId === 'a',
+    );
+    const text = buildParticipantSummary(trip, balance!, entries, participantShares(all, 'a'), en);
+    // Without it the statement claims 1,000,000 paid in but only shows 600,000.
+    expect(text).toContain('Hotel');
+  });
+
   it('never uses the same label for a total and a section heading', () => {
     for (const context of [en, vn]) {
       expect(context.t.participants.share).not.toBe(context.t.participants.sharesTitle);
@@ -244,7 +278,7 @@ describe('buildParticipantSummary', () => {
     const text = buildParticipantSummary(
       trip,
       balance!,
-      contributions,
+      buildFundEntries(expenses, contributions).filter((item) => item.participantId === 'a'),
       participantShares(expenses, 'a'),
       en,
     );

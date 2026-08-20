@@ -12,7 +12,15 @@ import {
   splitEvenly,
   toMinorUnits,
 } from '../lib/money';
-import type { Expense, ExpenseDraft, ExpenseSplit, ID, SplitType, Trip } from '../types/trip';
+import type {
+  Expense,
+  ExpenseDraft,
+  ExpenseSplit,
+  ID,
+  PaidFrom,
+  SplitType,
+  Trip,
+} from '../types/trip';
 import Button from './ui/Button';
 import ErrorSummary from './ui/ErrorSummary';
 import Field from './ui/Field';
@@ -23,7 +31,7 @@ import { collectErrors } from './ui/formErrors';
 export interface ExpenseFormProps {
   trip: Trip;
   expense?: Expense | null;
-  onSubmit: (draft: ExpenseDraft, alsoContribute: boolean) => void;
+  onSubmit: (draft: ExpenseDraft) => void;
   onCancel: () => void;
 }
 
@@ -44,6 +52,8 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
   const [date, setDate] = useState(normaliseDate(expense?.date, todayISO()));
   const [paidById, setPaidById] = useState(expense?.paidById ?? '');
+  // Fronting the money is the normal case; the fund only pays once it has some.
+  const [paidFrom, setPaidFrom] = useState<PaidFrom>(expense?.paidFrom ?? 'own');
   const [splitType, setSplitType] = useState<SplitType>(expense?.splitType ?? 'equal');
   const [attendeeIds, setAttendeeIds] = useState<ID[]>(() => {
     if (!expense) return memberIds;
@@ -57,7 +67,6 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
       expense.splits.map((split) => [split.participantId, String(split.amount)]),
     );
   });
-  const [alsoContribute, setAlsoContribute] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitCount, setSubmitCount] = useState(0);
 
@@ -150,17 +159,15 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
       return;
     }
 
-    onSubmit(
-      {
-        description: description.trim(),
-        amount: roundMoney(parsed.value, trip.currency),
-        paidById,
-        splits,
-        splitType,
-        date,
-      },
-      !expense && alsoContribute,
-    );
+    onSubmit({
+      description: description.trim(),
+      amount: roundMoney(parsed.value, trip.currency),
+      paidById,
+      paidFrom,
+      splits,
+      splitType,
+      date,
+    });
   }
 
   return (
@@ -225,22 +232,34 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
         </select>
       </Field>
 
-      {!expense && (
-        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border bg-sunken px-3.5 py-3">
-          <input
-            type="checkbox"
-            className="checkbox mt-0.5"
-            checked={alsoContribute}
-            onChange={(event) => setAlsoContribute(event.target.checked)}
-          />
-          <span className="text-sm">
-            <span className="font-medium text-ink">{t.expense.markAsContribution}</span>
-            <span className="mt-0.5 block text-xs text-ink-muted">
-              {t.expense.markAsContributionHint}
-            </span>
-          </span>
-        </label>
-      )}
+      {/* Left wrong this silently puts every member in the red, so it stays
+          visible and editable for the life of the expense, not a tickbox seen once. */}
+      <div role="group" aria-labelledby={`${fieldId}-paid-from-label`}>
+        <span className="label" id={`${fieldId}-paid-from-label`}>
+          {t.expense.paidFrom}
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          {(['own', 'fund'] as PaidFrom[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setPaidFrom(option)}
+              aria-pressed={paidFrom === option}
+              className={cx(
+                'rounded-control border px-3 py-2 text-sm font-medium transition-colors',
+                paidFrom === option
+                  ? 'border-brand-border bg-brand-soft text-brand'
+                  : 'border-border bg-sunken text-ink-muted hover:text-ink',
+              )}
+            >
+              {option === 'own' ? t.expense.paidFromOwn : t.expense.paidFromFund}
+            </button>
+          ))}
+        </div>
+        <p className="field-hint">
+          {paidFrom === 'own' ? t.expense.paidFromOwnHint : t.expense.paidFromFundHint}
+        </p>
+      </div>
 
       {/* A bare <span> labels nothing, so the pair of toggles is grouped under it. */}
       <div role="group" aria-labelledby={`${fieldId}-split-type-label`}>

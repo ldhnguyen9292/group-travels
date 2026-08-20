@@ -17,6 +17,7 @@ import StatTile from '../../../../components/ui/StatTile';
 import { btn } from '../../../../components/ui/classes';
 import { useI18n } from '../../../../i18n/context';
 import { computeBalances, findBalance, participantShares } from '../../../../lib/balances';
+import { buildFundEntries } from '../../../../lib/fundEntries';
 import { formatDate } from '../../../../lib/date';
 import { formatMoney, formatMoneySigned } from '../../../../lib/money';
 import { buildParticipantSummary } from '../../../../lib/summary';
@@ -59,9 +60,13 @@ export default function ParticipantDetail() {
     return findBalance(computeBalances(trip, expenses, contributions), participant.id);
   }, [trip, participant, expenses, contributions]);
 
-  const ownContributions = useMemo(
-    () => contributions.filter((item) => item.participantId === participantId),
-    [contributions, participantId],
+  // Contributions plus the expenses they fronted: everything behind "paid in".
+  const ownFundEntries = useMemo(
+    () =>
+      buildFundEntries(expenses, contributions).filter(
+        (item) => item.participantId === participantId,
+      ),
+    [expenses, contributions, participantId],
   );
   const shares = useMemo(
     () => (participantId ? participantShares(expenses, participantId) : []),
@@ -130,7 +135,7 @@ export default function ParticipantDetail() {
       <ShareDialog
         open={shareOpen}
         subject={`${trip.name} — ${participant.name}`}
-        text={buildParticipantSummary(trip, balance, ownContributions, shares, { t, locale })}
+        text={buildParticipantSummary(trip, balance, ownFundEntries, shares, { t, locale })}
         onClose={() => setShareOpen(false)}
       />
 
@@ -163,15 +168,16 @@ export default function ParticipantDetail() {
       </div>
 
       <Section title={t.participants.contributionsTitle}>
-        {ownContributions.length === 0 ? (
+        {ownFundEntries.length === 0 ? (
           <EmptyState title={t.participants.contributionsEmpty} compact />
         ) : (
           <ul className="divide-y divide-border">
-            {ownContributions.map((contribution) => (
+            {ownFundEntries.map((item) => (
               <MoneyRow
-                key={contribution.id}
-                label={formatDate(contribution.date, locale)}
-                value={formatMoney(contribution.amount, trip.currency, locale)}
+                key={item.key}
+                label={item.note ?? formatDate(item.date, locale)}
+                sub={item.note ? formatDate(item.date, locale) : undefined}
+                value={formatMoney(item.amount, trip.currency, locale)}
               />
             ))}
           </ul>

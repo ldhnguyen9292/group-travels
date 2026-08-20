@@ -63,25 +63,20 @@ export default function TripStoreProvider({ children }: { children: ReactNode })
     }));
   }, []);
 
-  const addExpense = useCallback((tripId: ID, draft: ExpenseDraft, alsoContribute = false) => {
+  /*
+   * Money the payer fronted is recorded by `draft.paidFrom`, not by a separate
+   * contribution record: one fact, one place. Editing or deleting the expense
+   * therefore cannot leave a stale credit behind.
+   */
+  const addExpense = useCallback((tripId: ID, draft: ExpenseDraft) => {
     const now = new Date().toISOString();
-    setData((current) => {
-      const expense = { ...draft, id: createId(), tripId, createdAt: now, updatedAt: now };
-      const contributions = [...current.contributions];
-      if (alsoContribute) {
-        // The payer used their own money, so it counts as money they put in.
-        contributions.unshift({
-          id: createId(),
-          tripId,
-          participantId: draft.paidById,
-          amount: draft.amount,
-          date: draft.date,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-      return { ...current, expenses: [expense, ...current.expenses], contributions };
-    });
+    setData((current) => ({
+      ...current,
+      expenses: [
+        { ...draft, id: createId(), tripId, createdAt: now, updatedAt: now },
+        ...current.expenses,
+      ],
+    }));
   }, []);
 
   const updateExpense = useCallback((expenseId: ID, draft: ExpenseDraft) => {

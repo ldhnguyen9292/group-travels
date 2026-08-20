@@ -19,8 +19,7 @@ export interface TripStore {
   createTrip: (draft: TripDraft) => Trip;
   updateTrip: (tripId: ID, draft: TripDraft) => void;
   deleteTrip: (tripId: ID) => void;
-  /** `alsoContribute` records the payer's money as a contribution in the same update. */
-  addExpense: (tripId: ID, draft: ExpenseDraft, alsoContribute?: boolean) => void;
+  addExpense: (tripId: ID, draft: ExpenseDraft) => void;
   updateExpense: (expenseId: ID, draft: ExpenseDraft) => void;
   deleteExpense: (expenseId: ID) => void;
   addContribution: (tripId: ID, draft: ContributionDraft) => void;

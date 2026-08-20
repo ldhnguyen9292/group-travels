@@ -3,6 +3,7 @@ import type {
   Expense,
   ExpenseSplit,
   ID,
+  PaidFrom,
   Participant,
   SplitType,
   Trip,
@@ -13,7 +14,7 @@ import { DEFAULT_CURRENCY, clampAmount, isCurrency } from './money';
 
 export const STORAGE_KEY = 'group-travel:v2';
 
-export const DATA_VERSION = 2;
+export const DATA_VERSION = 3;
 
 export interface AppData {
   version: number;
@@ -87,6 +88,41 @@ function normaliseTrip(value: unknown): Trip | null {
 }
 
 /** Accepts both the current shape and the legacy `{ participant: { id, name } }` shape. */
+/** An explicitly stored choice, or null for data written before the field existed. */
+function explicitPaidFrom(value: Record<string, unknown>): PaidFrom | null {
+  return value.paidFrom === 'own' || value.paidFrom === 'fund' ? value.paidFrom : null;
+}
+
+/**
+ * Identifies a payment well enough to spot the two records the old "count this
+ * as money the payer put in" checkbox wrote for one expense.
+ *
+ * `addExpense` used to stamp the expense and the contribution it spawned with a
+ * single `new Date().toISOString()`, so the pair shares an exact instant on top
+ * of the trip, person, amount and day. A contribution somebody typed by hand
+ * would have to land on the very same millisecond to be mistaken for one.
+ *
+ * Returns null when no timestamp was ever stored: `asTimestamp` invents one per
+ * record, and two invented stamps are not evidence of anything.
+ */
+function paymentFingerprint(
+  tripId: string,
+  participantId: string,
+  amount: unknown,
+  date: unknown,
+  createdAt: unknown,
+): string | null {
+  const stamp = asString(createdAt);
+  if (!stamp || Number.isNaN(new Date(stamp).getTime())) return null;
+  return [
+    tripId,
+    participantId,
+    asAmount(amount),
+    normaliseDate(asString(date), todayISO()),
+    stamp,
+  ].join('|');
+}
+
 function normaliseSplit(value: unknown): ExpenseSplit | null {
   if (!isRecord(value)) return null;
   const legacy = isRecord(value.participant) ? asString(value.participant.id) : '';
@@ -95,7 +131,15 @@ function normaliseSplit(value: unknown): ExpenseSplit | null {
   return { participantId, amount: asAmount(value.amount) };
 }
 
-function normaliseExpense(value: unknown, fallbackTripId?: ID): Expense | null {
+/**
+ * `legacyPaidFrom` decides the money's origin for records written before the
+ * field existed. Anything that stored the field keeps what it stored.
+ */
+function normaliseExpense(
+  value: unknown,
+  fallbackTripId?: ID,
+  legacyPaidFrom: PaidFrom = 'fund',
+): Expense | null {
   if (!isRecord(value)) return null;
   const tripId = asString(value.tripId) || asString(fallbackTripId);
   if (!tripId) return null;
@@ -116,6 +160,7 @@ function normaliseExpense(value: unknown, fallbackTripId?: ID): Expense | null {
     description: asString(value.description).trim() || '—',
     amount: asAmount(value.amount),
     paidById,
+    paidFrom: explicitPaidFrom(value) ?? legacyPaidFrom,
     splits,
     splitType,
     date: normaliseDate(asString(value.date), todayISO()),
@@ -157,16 +202,70 @@ export function normaliseAppData(value: unknown): AppData | null {
   const trips = value.trips.map(normaliseTrip).filter((trip): trip is Trip => trip !== null);
   const tripIds = new Set(trips.map((trip) => trip.id));
 
-  const expenses = (Array.isArray(value.expenses) ? value.expenses : [])
-    .map((entry) => normaliseExpense(entry))
+  const rawExpenses = Array.isArray(value.expenses) ? value.expenses : [];
+  const rawContributions = Array.isArray(value.contributions) ? value.contributions : [];
+
+  /*
+   * Fold the old checkbox's two records back into one. Money the payer fronted
+   * now lives on the expense as `paidFrom: 'own'`, so keeping the contribution
+   * it spawned would credit them for the same cash twice. Counting fingerprints
+   * rather than matching one-to-one stops two look-alike expenses from both
+   * claiming a single contribution.
+   */
+  const spawned = new Map<string, number>();
+  for (const entry of rawContributions) {
+    if (!isRecord(entry)) continue;
+    const key = paymentFingerprint(
+      asString(entry.tripId),
+      asString(entry.participantId),
+      entry.amount,
+      entry.date,
+      entry.createdAt,
+    );
+    if (key) spawned.set(key, (spawned.get(key) ?? 0) + 1);
+  }
+
+  const claimed = new Map<string, number>();
+  const claimSpawned = (entry: unknown): PaidFrom => {
+    if (!isRecord(entry) || explicitPaidFrom(entry)) return 'fund';
+    const key = paymentFingerprint(
+      asString(entry.tripId),
+      asString(entry.paidById),
+      entry.amount,
+      entry.date,
+      entry.createdAt,
+    );
+    if (!key) return 'fund';
+    const taken = claimed.get(key) ?? 0;
+    if (taken >= (spawned.get(key) ?? 0)) return 'fund';
+    claimed.set(key, taken + 1);
+    return 'own';
+  };
+
+  const expenses = rawExpenses
+    .map((entry) => normaliseExpense(entry, undefined, claimSpawned(entry)))
     .filter((expense): expense is Expense => expense !== null && tripIds.has(expense.tripId));
 
-  const contributions = (Array.isArray(value.contributions) ? value.contributions : [])
-    .map((entry) => normaliseContribution(entry))
-    .filter(
-      (contribution): contribution is Contribution =>
-        contribution !== null && tripIds.has(contribution.tripId),
+  const unclaimed = new Map(claimed);
+  const contributions: Contribution[] = [];
+  for (const entry of rawContributions) {
+    if (!isRecord(entry)) continue;
+    const key = paymentFingerprint(
+      asString(entry.tripId),
+      asString(entry.participantId),
+      entry.amount,
+      entry.date,
+      entry.createdAt,
     );
+    const outstanding = key ? (unclaimed.get(key) ?? 0) : 0;
+    if (key && outstanding > 0) {
+      // Its expense carries this money now.
+      unclaimed.set(key, outstanding - 1);
+      continue;
+    }
+    const contribution = normaliseContribution(entry);
+    if (contribution && tripIds.has(contribution.tripId)) contributions.push(contribution);
+  }
 
   return { version: DATA_VERSION, trips, expenses, contributions };
 }

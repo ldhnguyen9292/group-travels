@@ -24,6 +24,15 @@ export type CurrencyCode =
 
 export type SplitType = 'equal' | 'custom';
 
+/**
+ * Where the money for an expense came from.
+ *
+ * `own`: the payer fronted it out of their own pocket, so it counts as money
+ * they put into the shared fund. `fund`: it was paid out of money already
+ * contributed, so the payer is not owed anything extra for it.
+ */
+export type PaidFrom = 'own' | 'fund';
+
 export interface Participant {
   id: ID;
   name: string;
@@ -56,6 +65,8 @@ export interface Expense {
   amount: number;
   /** Who physically paid. */
   paidById: ID;
+  /** Whose money it was: the payer's own, or the shared fund's. */
+  paidFrom: PaidFrom;
   splits: ExpenseSplit[];
   splitType: SplitType;
   /** ISO date (yyyy-mm-dd). */

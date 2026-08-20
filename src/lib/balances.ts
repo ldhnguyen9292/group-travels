@@ -21,10 +21,17 @@ export function computeTotals(
     expenses.reduce((sum, item) => sum + item.amount, 0),
     trip.currency,
   );
+  // Money the payers fronted themselves entered the fund too, just via an
+  // expense rather than a contribution record. Counting it here is what keeps
+  // `remaining` equal to the sum of everyone's net.
+  const totalFronted = roundMoney(
+    expenses.reduce((sum, item) => sum + (item.paidFrom === 'own' ? item.amount : 0), 0),
+    trip.currency,
+  );
   return {
-    contributions: totalContributions,
+    contributions: roundMoney(totalContributions + totalFronted, trip.currency),
     expenses: totalExpenses,
-    remaining: roundMoney(totalContributions - totalExpenses, trip.currency),
+    remaining: roundMoney(totalContributions + totalFronted - totalExpenses, trip.currency),
   };
 }
 
@@ -49,6 +56,13 @@ export function computeBalances(
   const share = new Map<ID, number>();
   const paidOutOfPocket = new Map<ID, number>();
   for (const expense of expenses) {
+    if (expense.paidFrom === 'own') {
+      // Their own cash went in, so it counts the same as a contribution.
+      contributed.set(
+        expense.paidById,
+        (contributed.get(expense.paidById) ?? 0) + expense.amount,
+      );
+    }
     paidOutOfPocket.set(
       expense.paidById,
       (paidOutOfPocket.get(expense.paidById) ?? 0) + expense.amount,

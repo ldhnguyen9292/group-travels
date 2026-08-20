@@ -133,3 +133,105 @@ describe('parseImportedData', () => {
     expect(parseImportedData(backup)?.trips).toHaveLength(1);
   });
 });
+
+describe('normaliseAppData: expenses saved before paidFrom existed', () => {
+  const legacyExpense = {
+    id: 'e1',
+    tripId: 'trip-1',
+    description: 'Dinner',
+    amount: 300_000,
+    paidById: 'a',
+    splits: [{ participantId: 'a', amount: 300_000 }],
+    splitType: 'equal',
+    date: '2025-10-24',
+    createdAt: '2025-10-24T10:00:00.000Z',
+    updatedAt: '2025-10-24T10:00:00.000Z',
+  };
+
+  /** What the old "count this as money the payer put in" checkbox produced. */
+  const spawnedContribution = {
+    id: 'c1',
+    tripId: 'trip-1',
+    participantId: 'a',
+    amount: 300_000,
+    date: '2025-10-24',
+    createdAt: '2025-10-24T10:00:00.000Z',
+    updatedAt: '2025-10-24T10:00:00.000Z',
+  };
+
+  it('keeps an explicit paidFrom', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [
+        { ...legacyExpense, paidFrom: 'own' },
+        { ...legacyExpense, id: 'e2', paidFrom: 'fund' },
+      ],
+    });
+    expect(data?.expenses.map((expense) => expense.paidFrom)).toEqual(['own', 'fund']);
+  });
+
+  it('folds a contribution the old checkbox spawned back into its expense', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [legacyExpense],
+      contributions: [spawnedContribution],
+    });
+    expect(data?.expenses[0].paidFrom).toBe('own');
+    // Kept as a contribution record too, it would credit An twice over.
+    expect(data?.contributions).toEqual([]);
+  });
+
+  it('assumes the fund paid when nothing matches, leaving the books untouched', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [legacyExpense],
+      contributions: [{ ...spawnedContribution, amount: 500_000 }],
+    });
+    expect(data?.expenses[0].paidFrom).toBe('fund');
+    expect(data?.contributions).toHaveLength(1);
+  });
+
+  it('leaves a real contribution that only looks similar alone', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [legacyExpense],
+      // Same person, amount and day, but entered by hand at another moment.
+      contributions: [{ ...spawnedContribution, createdAt: '2025-10-24T18:30:00.000Z' }],
+    });
+    expect(data?.expenses[0].paidFrom).toBe('fund');
+    expect(data?.contributions).toHaveLength(1);
+  });
+
+  it('never lets two expenses claim the same contribution', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [legacyExpense, { ...legacyExpense, id: 'e2' }],
+      contributions: [spawnedContribution],
+    });
+    expect(data?.expenses.map((expense) => expense.paidFrom)).toEqual(['own', 'fund']);
+    expect(data?.contributions).toEqual([]);
+  });
+
+  it('will not pair records that never stored a timestamp to match on', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [
+        {
+          id: 'e1',
+          tripId: 'trip-1',
+          description: 'Dinner',
+          amount: 300_000,
+          paidById: 'a',
+          splits: [{ participantId: 'a', amount: 300_000 }],
+          splitType: 'equal',
+          date: '2025-10-24',
+        },
+      ],
+      contributions: [
+        { id: 'c1', tripId: 'trip-1', participantId: 'a', amount: 300_000, date: '2025-10-24' },
+      ],
+    });
+    expect(data?.expenses[0].paidFrom).toBe('fund');
+    expect(data?.contributions).toHaveLength(1);
+  });
+});

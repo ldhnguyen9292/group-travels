@@ -1,6 +1,5 @@
 import type { Dictionary } from '../i18n/dictionary';
 import type {
-  Contribution,
   Expense,
   ID,
   ParticipantBalance,
@@ -8,6 +7,7 @@ import type {
   TripTotals,
 } from '../types/trip';
 import { formatDateRange, formatShortDate } from './date';
+import type { FundEntry } from './fundEntries';
 import { formatMoney, formatMoneySigned } from './money';
 import { nameOf, participantNames } from './participants';
 
@@ -106,10 +106,15 @@ export function buildTripSummary(
   return lines.join('\n');
 }
 
+/**
+ * `entries` is every way this member's money reached the fund — contributions
+ * they made and expenses they fronted — so the itemised list adds up to the
+ * "paid in" total above it.
+ */
 export function buildParticipantSummary(
   trip: Trip,
   balance: ParticipantBalance,
-  contributions: Contribution[],
+  entries: FundEntry[],
   shares: { expense: Expense; amount: number }[],
   { t, locale }: SummaryContext,
 ): string {
@@ -123,11 +128,15 @@ export function buildParticipantSummary(
     `${t.participants.net}: ${formatMoneySigned(balance.net, trip.currency, locale)} (${netLabel(balance.net, t)})`,
   );
 
-  if (contributions.length > 0) {
+  if (entries.length > 0) {
     lines.push('', `${t.participants.contributionsTitle}:`);
-    for (const contribution of [...contributions].sort(byOldest)) {
-      const day = formatShortDate(contribution.date, locale);
-      lines.push(`• ${day ? `${day} — ` : ''}${money(contribution.amount)}`);
+    for (const item of [...entries].sort(byOldest)) {
+      if (item.note) {
+        lines.push(entry(item.date, item.note, money(item.amount), locale));
+        continue;
+      }
+      const day = formatShortDate(item.date, locale);
+      lines.push(`• ${day ? `${day} — ` : ''}${money(item.amount)}`);
     }
   }
 

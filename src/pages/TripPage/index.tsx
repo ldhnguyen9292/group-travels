@@ -30,6 +30,7 @@ import StatTile from '../../components/ui/StatTile';
 import { btn } from '../../components/ui/classes';
 import { useI18n } from '../../i18n/context';
 import { computeBalances, computeTotals } from '../../lib/balances';
+import { buildFundEntries } from '../../lib/fundEntries';
 import { formatDateRange } from '../../lib/date';
 import { buildExpenseMatrix } from '../../lib/expenseMatrix';
 import { formatMoney } from '../../lib/money';
@@ -107,6 +108,11 @@ export default function TripPage() {
     () => (trip ? computeBalances(trip, expenses, contributions) : []),
     [trip, expenses, contributions],
   );
+  // Contributions and the expenses their payers fronted, as one list of money in.
+  const fundEntries = useMemo(
+    () => buildFundEntries(expenses, contributions),
+    [expenses, contributions],
+  );
   const dates = trip ? formatDateRange(trip.startDate, trip.endDate, locale) : '';
   // One grid, rendered as a table on screen and as a picture in the share sheet.
   const matrix = useMemo(
@@ -147,9 +153,9 @@ export default function TripPage() {
     closeModal();
   };
 
-  const handleExpenseSubmit = (draft: ExpenseDraft, alsoContribute: boolean) => {
+  const handleExpenseSubmit = (draft: ExpenseDraft) => {
     if (editingExpense) updateExpense(editingExpense.id, draft);
-    else addExpense(trip.id, draft, alsoContribute);
+    else addExpense(trip.id, draft);
     closeModal();
   };
 
@@ -262,12 +268,12 @@ export default function TripPage() {
       </Section>
 
       <Section icon={<IconWallet className="h-4 w-4" />} title={t.contribution.title}>
-        {contributions.length === 0 ? (
+        {fundEntries.length === 0 ? (
           <EmptyState title={t.contribution.empty} compact />
         ) : (
           <ContributionList
             trip={trip}
-            contributions={contributions}
+            entries={fundEntries}
             onEdit={(contribution) => {
               setEditingContribution(contribution);
               setActiveModal('contribution');
