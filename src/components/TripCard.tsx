@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n/context';
 import { formatDateRange } from '../lib/date';
-import { formatMoney, roundMoney } from '../lib/money';
-import type { Trip } from '../types/trip';
+import { formatMoney } from '../lib/money';
+import type { Trip, TripTotals } from '../types/trip';
 import Avatar from './ui/Avatar';
 import Button from './ui/Button';
 import { IconCalendar, IconPencil, IconTrash } from './ui/Icons';
@@ -12,27 +12,21 @@ const VISIBLE_MEMBERS = 4;
 
 export interface TripCardProps {
   trip: Trip;
-  contributionsTotal: number;
-  expensesTotal: number;
+  /** From `computeTotalsByTrip`, so the card matches the trip's own page. */
+  totals: TripTotals;
   onEdit: (trip: Trip) => void;
   onDelete: (trip: Trip) => void;
 }
 
-export default function TripCard({
-  trip,
-  contributionsTotal,
-  expensesTotal,
-  onEdit,
-  onDelete,
-}: TripCardProps) {
+export default function TripCard({ trip, totals, onEdit, onDelete }: TripCardProps) {
   const { t, locale } = useI18n();
   const dates = formatDateRange(trip.startDate, trip.endDate, locale);
-  const remaining = roundMoney(contributionsTotal - expensesTotal, trip.currency);
+  const { contributions: fundIn, expenses: spent, remaining } = totals;
   const shown = trip.participants.slice(0, VISIBLE_MEMBERS);
   const hidden = trip.participants.length - shown.length;
 
   // Only meaningful once there is a fund to spend against.
-  const usedRatio = contributionsTotal > 0 ? expensesTotal / contributionsTotal : null;
+  const usedRatio = fundIn > 0 ? spent / fundIn : null;
   const usedPercent = usedRatio === null ? 0 : Math.round(usedRatio * 100);
 
   return (
@@ -102,13 +96,13 @@ export default function TripCard({
         <div className="flex items-baseline justify-between gap-3">
           <dt className="shrink-0 text-ink-muted">{t.trip.fundIn}</dt>
           <dd className="money text-right font-semibold">
-            {formatMoney(contributionsTotal, trip.currency, locale)}
+            {formatMoney(fundIn, trip.currency, locale)}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">
           <dt className="shrink-0 text-ink-muted">{t.trip.spent}</dt>
           <dd className="money text-right font-semibold">
-            {formatMoney(expensesTotal, trip.currency, locale)}
+            {formatMoney(spent, trip.currency, locale)}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3 border-t border-border pt-1.5">

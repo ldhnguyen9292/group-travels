@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Contribution, Expense, Trip } from '../types/trip';
-import { computeBalances, computeTotals, findBalance, participantShares } from './balances';
+import {
+  computeBalances,
+  computeTotals,
+  computeTotalsByTrip,
+  findBalance,
+  participantShares,
+} from './balances';
 
 const trip: Trip = {
   id: 'trip-1',
@@ -173,5 +179,47 @@ describe('participantShares', () => {
     expect(participantShares(expenses, 'c')).toEqual([{ expense: expenses[0], amount: 100_000 }]);
     expect(participantShares(expenses, 'a')).toHaveLength(2);
     expect(participantShares(expenses, 'nobody')).toEqual([]);
+  });
+});
+
+describe('computeTotalsByTrip', () => {
+  const other: Trip = {
+    ...trip,
+    id: 'trip-2',
+    name: 'Hue',
+    participants: [{ id: 'd', name: 'Dung' }],
+  };
+
+  const fronted: Expense = {
+    id: 'e4',
+    tripId: 'trip-2',
+    description: 'Hotel',
+    amount: 800_000,
+    paidById: 'd',
+    paidFrom: 'own',
+    splitType: 'equal',
+    splits: [{ participantId: 'd', amount: 800_000 }],
+    date: '2025-10-05',
+    createdAt: '2025-10-05T00:00:00.000Z',
+    updatedAt: '2025-10-05T00:00:00.000Z',
+  };
+
+  it('gives every trip the same totals its own page would show', () => {
+    const map = computeTotalsByTrip([trip, other], [...expenses, fronted], contributions);
+    expect(map.get('trip-1')).toEqual(computeTotals(trip, expenses, contributions));
+    expect(map.get('trip-2')).toEqual(computeTotals(other, [fronted], []));
+  });
+
+  it('counts money a lone payer fronted as fund in, so nothing looks overspent', () => {
+    const totals = computeTotalsByTrip([other], [fronted], []).get('trip-2');
+    expect(totals).toEqual({ contributions: 800_000, expenses: 800_000, remaining: 0 });
+  });
+
+  it('reports zeros for a trip with no records', () => {
+    expect(computeTotalsByTrip([other], [], []).get('trip-2')).toEqual({
+      contributions: 0,
+      expenses: 0,
+      remaining: 0,
+    });
   });
 });

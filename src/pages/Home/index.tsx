@@ -11,15 +11,12 @@ import Pagination from '../../components/ui/Pagination';
 import { input } from '../../components/ui/classes';
 import { usePagination } from '../../hooks/usePagination';
 import { useI18n } from '../../i18n/context';
+import { computeTotalsByTrip } from '../../lib/balances';
 import { useLockedParticipantIds, useTripStore } from '../../store/context';
-import type { ID, Trip, TripDraft } from '../../types/trip';
+import type { Trip, TripDraft, TripTotals } from '../../types/trip';
 
 const PAGE_SIZE = 9;
-
-interface Totals {
-  contributions: number;
-  expenses: number;
-}
+const EMPTY_TOTALS: TripTotals = { contributions: 0, expenses: 0, remaining: 0 };
 
 export default function Home() {
   const { t } = useI18n();
@@ -32,19 +29,11 @@ export default function Home() {
   const [pendingDelete, setPendingDelete] = useState<Trip | null>(null);
   const lockedIds = useLockedParticipantIds(editing?.id);
 
-  const totalsByTrip = useMemo(() => {
-    const map = new Map<ID, Totals>();
-    const entry = (tripId: ID): Totals => {
-      const existing = map.get(tripId);
-      if (existing) return existing;
-      const created = { contributions: 0, expenses: 0 };
-      map.set(tripId, created);
-      return created;
-    };
-    for (const contribution of contributions) entry(contribution.tripId).contributions += contribution.amount;
-    for (const expense of expenses) entry(expense.tripId).expenses += expense.amount;
-    return map;
-  }, [contributions, expenses]);
+  // Shared with the trip page, so a card never disagrees with the page it opens.
+  const totalsByTrip = useMemo(
+    () => computeTotalsByTrip(trips, expenses, contributions),
+    [trips, expenses, contributions],
+  );
 
   const filtered = useMemo(() => {
     const sorted = [...trips].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -136,19 +125,15 @@ export default function Home() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((trip) => {
-              const totals = totalsByTrip.get(trip.id);
-              return (
-                <TripCard
-                  key={trip.id}
-                  trip={trip}
-                  contributionsTotal={totals?.contributions ?? 0}
-                  expensesTotal={totals?.expenses ?? 0}
-                  onEdit={openEdit}
-                  onDelete={setPendingDelete}
-                />
-              );
-            })}
+            {items.map((trip) => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                totals={totalsByTrip.get(trip.id) ?? EMPTY_TOTALS}
+                onEdit={openEdit}
+                onDelete={setPendingDelete}
+              />
+            ))}
           </div>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </>

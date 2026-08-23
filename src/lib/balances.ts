@@ -36,6 +36,40 @@ export function computeTotals(
 }
 
 /**
+ * The same totals as `computeTotals`, for a whole list of trips at once, so a
+ * card on the trip list reads exactly like the trip's own page. Grouping the
+ * records first keeps this one pass over each list rather than one per trip.
+ */
+export function computeTotalsByTrip(
+  trips: Trip[],
+  expenses: Expense[],
+  contributions: Contribution[],
+): Map<ID, TripTotals> {
+  const expensesByTrip = new Map<ID, Expense[]>();
+  for (const expense of expenses) {
+    const list = expensesByTrip.get(expense.tripId);
+    if (list) list.push(expense);
+    else expensesByTrip.set(expense.tripId, [expense]);
+  }
+
+  const contributionsByTrip = new Map<ID, Contribution[]>();
+  for (const contribution of contributions) {
+    const list = contributionsByTrip.get(contribution.tripId);
+    if (list) list.push(contribution);
+    else contributionsByTrip.set(contribution.tripId, [contribution]);
+  }
+
+  const totals = new Map<ID, TripTotals>();
+  for (const trip of trips) {
+    totals.set(
+      trip.id,
+      computeTotals(trip, expensesByTrip.get(trip.id) ?? [], contributionsByTrip.get(trip.id) ?? []),
+    );
+  }
+  return totals;
+}
+
+/**
  * Per-participant standing in the shared fund.
  *
  *   net = what they put in − their share of what the group spent
