@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import GuideCard from '../../components/GuideCard';
 import TripCard from '../../components/TripCard';
 import TripForm from '../../components/TripForm';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
-import { IconPlus, IconSearch, IconWallet } from '../../components/ui/Icons';
+import { IconCheck, IconPlus, IconSearch, IconShare, IconWallet } from '../../components/ui/Icons';
 import Modal from '../../components/ui/Modal';
 import Pagination from '../../components/ui/Pagination';
 import { input } from '../../components/ui/classes';
+import { canNativeShare, shareLink, useClipboard } from '../../hooks/useClipboard';
 import { usePagination } from '../../hooks/usePagination';
 import { useI18n } from '../../i18n/context';
 import { computeTotalsByTrip } from '../../lib/balances';
+import { buildAppShare } from '../../lib/homeGuide';
 import { useLockedParticipantIds, useTripStore } from '../../store/context';
 import type { Trip, TripDraft, TripTotals } from '../../types/trip';
 
@@ -22,6 +25,7 @@ export default function Home() {
   const { t } = useI18n();
   const { trips, expenses, contributions, createTrip, updateTrip, deleteTrip } = useTripStore();
   const navigate = useNavigate();
+  const { status: copyStatus, copy } = useClipboard();
 
   const [query, setQuery] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -74,6 +78,13 @@ export default function Home() {
     navigate(`/trip/${trip.id}`);
   }
 
+  async function shareApp() {
+    const { title, text, url } = buildAppShare(t, window.location.origin);
+    if (await shareLink(title, text, url)) return;
+    // Dismissing the share sheet is a choice, not a failure: only copy where there is no sheet.
+    if (!canNativeShare()) copy(`${text}\n${url}`);
+  }
+
   function confirmDelete() {
     if (pendingDelete) deleteTrip(pendingDelete.id);
     setPendingDelete(null);
@@ -87,11 +98,29 @@ export default function Home() {
             <h1 className="text-2xl font-semibold sm:text-3xl">{t.home.title}</h1>
             <p className="mt-1.5 text-sm text-ink-muted">{t.home.subtitle}</p>
           </div>
-          <Button onClick={openCreate}>
-            <IconPlus className="h-4 w-4" />
-            {t.home.newTrip}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => void shareApp()}>
+              <IconShare className="h-4 w-4" />
+              {t.homeGuide.shareApp}
+            </Button>
+            <Button onClick={openCreate}>
+              <IconPlus className="h-4 w-4" />
+              {t.home.newTrip}
+            </Button>
+          </div>
         </div>
+
+        {copyStatus === 'copied' && (
+          <p role="status" className="mt-3 flex items-center gap-1.5 text-sm text-good">
+            <IconCheck className="h-4 w-4" />
+            {t.homeGuide.linkCopied}
+          </p>
+        )}
+        {copyStatus === 'failed' && (
+          <p role="status" className="mt-3 text-sm text-ink-muted break-all">
+            {buildAppShare(t, window.location.origin).url}
+          </p>
+        )}
 
         {trips.length > 0 && (
           <div className="relative mt-5 max-w-sm">
@@ -107,6 +136,8 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <GuideCard hasTrips={trips.length > 0} />
 
       {trips.length === 0 ? (
         <EmptyState
