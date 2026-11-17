@@ -7,6 +7,7 @@ import DailyTotals from '../../components/DailyTotals';
 import ExpenseForm from '../../components/ExpenseForm';
 import ExpenseList from '../../components/ExpenseList';
 import ExpenseTable from '../../components/ExpenseTable';
+import ReceiptScanner from '../../components/ReceiptScanner';
 import ShareDialog from '../../components/ShareDialog';
 import TripForm from '../../components/TripForm';
 import Button from '../../components/ui/Button';
@@ -48,7 +49,7 @@ import type {
   TripDraft,
 } from '../../types/trip';
 
-type ActiveModal = 'trip' | 'contribution' | 'expense' | 'share' | null;
+type ActiveModal = 'trip' | 'contribution' | 'expense' | 'receipt' | 'share' | null;
 
 /** The list edits, the table checks. Whichever is open is a per-visit choice. */
 type ExpenseView = 'list' | 'table' | 'daily';
@@ -165,6 +166,12 @@ export default function TripPage() {
     closeModal();
   };
 
+  /** An itemised expense reopens on its items; anything else in the plain form. */
+  function editExpense(expense: Expense) {
+    setEditingExpense(expense);
+    setActiveModal(expense.items?.length ? 'receipt' : 'expense');
+  }
+
   function confirmDelete() {
     if (pendingDelete?.kind === 'contribution') deleteContribution(pendingDelete.id);
     if (pendingDelete?.kind === 'expense') deleteExpense(pendingDelete.id);
@@ -259,6 +266,15 @@ export default function TripPage() {
         >
           <IconPlus className="h-4 w-4" />
           {t.trip.addExpense}
+        </Button>
+        <Button
+          variant="soft"
+          onClick={() => setActiveModal('receipt')}
+          disabled={!hasMembers}
+          title={hasMembers ? undefined : t.trip.balancesEmpty}
+        >
+          <IconReceipt className="h-4 w-4" />
+          {t.receipt.scan}
         </Button>
       </div>
 
@@ -360,10 +376,7 @@ export default function TripPage() {
           <ExpenseList
             trip={trip}
             expenses={expenses}
-            onEdit={(expense) => {
-              setEditingExpense(expense);
-              setActiveModal('expense');
-            }}
+            onEdit={editExpense}
             onDelete={(expenseId) => setPendingDelete({ kind: 'expense', id: expenseId })}
           />
         )}
@@ -404,6 +417,29 @@ export default function TripPage() {
           expense={editingExpense}
           onSubmit={handleExpenseSubmit}
           onCancel={closeModal}
+        />
+      </Modal>
+
+      <Modal
+        open={activeModal === 'receipt'}
+        title={editingExpense ? t.receipt.editTitle : t.receipt.addTitle}
+        onClose={closeModal}
+        widthClass="max-w-2xl"
+      >
+        <ReceiptScanner
+          key={editingExpense?.id ?? 'new'}
+          trip={trip}
+          expense={editingExpense}
+          onSubmit={handleExpenseSubmit}
+          onCancel={closeModal}
+          onUnitemise={
+            editingExpense
+              ? () => {
+                // Saving the plain form clears the items; cancelling it keeps them.
+                setActiveModal('expense');
+              }
+              : undefined
+          }
         />
       </Modal>
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { countLabel, formatLongDay, type DayTotals } from '../lib/daily';
+import { countLabel, formatLongDay, itemCountLabel, type DayTotals } from '../lib/daily';
 import { formatMoney } from '../lib/money';
 import { nameOf, participantNames } from '../lib/participants';
 import type { Trip } from '../types/trip';
@@ -56,7 +56,7 @@ export default function DailyTotals({ trip, days, onShareDay }: DailyTotalsProps
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium capitalize">
-                    {formatLongDay(day.date, locale)}
+                    {formatLongDay(day.date, locale, false)}
                   </span>
                   <span className="block text-xs text-ink-muted">
                     {countLabel(day.expenses.length, t)}
@@ -106,6 +106,11 @@ export default function DailyTotals({ trip, days, onShareDay }: DailyTotalsProps
                       >
                         <span className="min-w-0 truncate">
                           {expense.description}
+                          {expense.items?.length ? (
+                            <span className="badge badge-neutral ml-1.5">
+                              {itemCountLabel(expense.items.length, t)}
+                            </span>
+                          ) : null}
                           <span className="text-ink-muted">
                             {' · '}
                             {expense.paidFrom === 'fund'

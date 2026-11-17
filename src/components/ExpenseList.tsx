@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { usePagination } from '../hooks/usePagination';
 import { useI18n } from '../i18n/context';
+import { itemCountLabel } from '../lib/daily';
 import { formatDate } from '../lib/date';
 import { formatMoney } from '../lib/money';
 import { nameOf, participantNames } from '../lib/participants';
@@ -42,7 +43,11 @@ export default function ExpenseList({ trip, expenses, onEdit, onDelete }: Expens
                       {t.expense.paidBy}: {nameOf(names, expense.paidById, t.common.unknown)}
                     </span>
                     <span className="badge badge-neutral">
-                      {expense.splitType === 'equal' ? t.expense.equal : t.expense.custom}
+                      {expense.items?.length
+                        ? itemCountLabel(expense.items.length, t)
+                        : expense.splitType === 'equal'
+                          ? t.expense.equal
+                          : t.expense.custom}
                     </span>
                   </p>
                 </div>
@@ -82,6 +87,37 @@ export default function ExpenseList({ trip, expenses, onEdit, onDelete }: Expens
                   </Button>
                 </div>
               </div>
+
+              {expanded && expense.items?.length ? (
+                <ul className="mt-2.5 space-y-1 rounded-xl border border-border px-3.5 py-2.5">
+                  {expense.items.map((item) => (
+                    <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+                      <span className="min-w-0">
+                        <span className="block truncate">{item.name}</span>
+                        <span className="block truncate text-xs text-ink-muted">
+                          {item.participantIds
+                            .map((id) => nameOf(names, id, t.common.unknown))
+                            .join(', ')}
+                        </span>
+                      </span>
+                      <span className="money shrink-0">
+                        {formatMoney(item.price, trip.currency, locale)}
+                      </span>
+                    </li>
+                  ))}
+                  {expense.fees?.map((fee, index) => (
+                    <li
+                      key={`fee-${index}`}
+                      className="flex items-center justify-between gap-3 text-sm text-ink-muted"
+                    >
+                      <span className="min-w-0 truncate">{fee.label}</span>
+                      <span className="money shrink-0">
+                        {formatMoney(fee.amount, trip.currency, locale)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
               {expanded && (
                 <ul className="mt-2.5 space-y-1 rounded-xl bg-sunken px-3.5 py-2.5">

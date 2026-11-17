@@ -167,6 +167,11 @@ export default function ExpenseForm({ trip, expense, onSubmit, onCancel }: Expen
       splits,
       splitType,
       date,
+      // Saved from this form, an expense is no longer split by item: clear the
+      // breakdown explicitly, or an update would keep the old items alongside
+      // splits that no longer match them.
+      items: undefined,
+      fees: undefined,
     });
   }
 

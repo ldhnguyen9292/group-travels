@@ -1,6 +1,8 @@
 import type {
   Contribution,
   Expense,
+  ExpenseFee,
+  ExpenseItem,
   ExpenseSplit,
   ID,
   PaidFrom,
@@ -10,7 +12,7 @@ import type {
 } from '../types/trip';
 import { normaliseDate, todayISO } from './date';
 import { createId } from './id';
-import { DEFAULT_CURRENCY, clampAmount, isCurrency } from './money';
+import { DEFAULT_CURRENCY, MAX_AMOUNT, clampAmount, isCurrency } from './money';
 
 export const STORAGE_KEY = 'group-travel:v2';
 
@@ -131,6 +133,42 @@ function normaliseSplit(value: unknown): ExpenseSplit | null {
   return { participantId, amount: asAmount(value.amount) };
 }
 
+function normaliseItem(value: unknown): ExpenseItem | null {
+  if (!isRecord(value)) return null;
+  const participantIds = Array.isArray(value.participantIds)
+    ? [...new Set(value.participantIds.filter((id): id is string => typeof id === 'string' && id !== ''))]
+    : [];
+  return {
+    id: asString(value.id) || createId(),
+    name: asString(value.name).trim() || '—',
+    price: asAmount(value.price),
+    participantIds,
+  };
+}
+
+/** Unlike every other amount, a fee may be negative: that is a discount. */
+function normaliseFee(value: unknown): ExpenseFee | null {
+  if (!isRecord(value)) return null;
+  const raw = typeof value.amount === 'number' ? value.amount : Number(value.amount);
+  if (!Number.isFinite(raw) || raw === 0) return null;
+  return {
+    label: asString(value.label).trim() || '—',
+    amount: Math.min(Math.max(raw, -MAX_AMOUNT), MAX_AMOUNT),
+  };
+}
+
+/** The item breakdown, or nothing at all: an empty list would mean "itemised, but by nothing". */
+function normaliseItemisation(value: Record<string, unknown>): Pick<Expense, 'items' | 'fees'> {
+  const items = Array.isArray(value.items)
+    ? value.items.map(normaliseItem).filter((item): item is ExpenseItem => item !== null)
+    : [];
+  if (items.length === 0) return {};
+  const fees = Array.isArray(value.fees)
+    ? value.fees.map(normaliseFee).filter((fee): fee is ExpenseFee => fee !== null)
+    : [];
+  return fees.length > 0 ? { items, fees } : { items };
+}
+
 /**
  * `legacyPaidFrom` decides the money's origin for records written before the
  * field existed. Anything that stored the field keeps what it stored.
@@ -164,6 +202,7 @@ function normaliseExpense(
     splits,
     splitType,
     date: normaliseDate(asString(value.date), todayISO()),
+    ...normaliseItemisation(value),
     createdAt,
     updatedAt: asString(value.updatedAt) ? asTimestamp(value.updatedAt) : createdAt,
   };

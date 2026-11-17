@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import FeedbackCard from '../../components/FeedbackCard';
+import GeminiKeyCard from '../../components/GeminiKeyCard';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { IconAlert, IconCheck, IconDownload, IconTrash, IconUpload } from '../../components/ui/Icons';
@@ -64,6 +65,8 @@ export default function About() {
         <h2 className="text-base font-semibold">{t.about.privacyTitle}</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.about.privacyBody}</p>
       </section>
+
+      <GeminiKeyCard />
 
       <section className="card p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

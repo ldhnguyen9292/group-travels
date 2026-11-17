@@ -56,8 +56,9 @@ export default defineConfig({
          */
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
-        // The app makes no network requests at all, so there is nothing to
-        // runtime-cache — every asset it needs is in the precache above.
+        // The only network request the app makes is a receipt scan sent to the
+        // Gemini API, which must never be cached — so there is nothing to
+        // runtime-cache; every asset it needs is in the precache above.
         runtimeCaching: [],
       },
     }),

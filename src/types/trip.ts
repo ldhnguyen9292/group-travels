@@ -57,6 +57,26 @@ export interface ExpenseSplit {
   amount: number;
 }
 
+/**
+ * One line of an itemised bill. `price` is the whole line (quantity already
+ * multiplied in) and is shared evenly between `participantIds`.
+ */
+export interface ExpenseItem {
+  id: ID;
+  name: string;
+  price: number;
+  participantIds: ID[];
+}
+
+/**
+ * Tax, service charge, tip — or a discount, as a negative amount. Shared evenly
+ * between everyone who has at least one item on the bill.
+ */
+export interface ExpenseFee {
+  label: string;
+  amount: number;
+}
+
 /** Money spent for the group, split between the attendees. */
 export interface Expense {
   id: ID;
@@ -71,6 +91,12 @@ export interface Expense {
   splitType: SplitType;
   /** ISO date (yyyy-mm-dd). */
   date: string;
+  /**
+   * Present only on an expense split by item (usually a scanned receipt). The
+   * `splits` are then derived from these and kept in step with them.
+   */
+  items?: ExpenseItem[];
+  fees?: ExpenseFee[];
   createdAt: string;
   updatedAt: string;
 }

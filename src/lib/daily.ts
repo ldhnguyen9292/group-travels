@@ -80,20 +80,29 @@ export interface DailyContext {
   locale: string;
 }
 
-/** "Tuesday, 11/17/2026" / "Thứ Ba, 17/11/2026": a single day deserves its weekday. */
-export function formatLongDay(value: string, locale: string): string {
+/**
+ * "Tuesday, 11/17/2026" / "Thứ Ba, 17/11/2026": a single day deserves its
+ * weekday. On screen the trip already sets the year, and a narrow phone needs
+ * the room, so the year can be left off there.
+ */
+export function formatLongDay(value: string, locale: string, withYear = true): string {
   const date = parseDate(value);
   if (!date) return value;
   return date.toLocaleDateString(locale, {
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
+    ...(withYear ? { year: 'numeric' } : {}),
   });
 }
 
 export function countLabel(count: number, t: Dictionary): string {
   return (count === 1 ? t.daily.countOne : t.daily.countOther).replace('{n}', String(count));
+}
+
+/** "🧾 3 items", the badge on an expense split by item. */
+export function itemCountLabel(count: number, t: Dictionary): string {
+  return `🧾 ${(count === 1 ? t.receipt.badgeOne : t.receipt.badgeOther).replace('{n}', String(count))}`;
 }
 
 /** "(An paid)" for money somebody fronted, "(Fund)" when the kitty paid. */

@@ -235,3 +235,62 @@ describe('normaliseAppData: expenses saved before paidFrom existed', () => {
     expect(data?.contributions).toHaveLength(1);
   });
 });
+
+describe('normaliseAppData: itemised expenses', () => {
+  const base = {
+    id: 'e1',
+    tripId: 'trip-1',
+    description: 'Lunch',
+    amount: 90_000,
+    paidById: 'a',
+    paidFrom: 'own',
+    splitType: 'custom',
+    splits: [{ participantId: 'a', amount: 90_000 }],
+    date: '2026-11-17',
+  };
+
+  it('keeps items and fees, discounts staying negative', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [
+        {
+          ...base,
+          items: [{ id: 'i1', name: 'Pho', price: 100_000, participantIds: ['a', 'a'] }],
+          fees: [{ label: 'Discount', amount: -10_000 }],
+        },
+      ],
+    });
+    const expense = data?.expenses[0];
+    expect(expense?.items).toEqual([
+      { id: 'i1', name: 'Pho', price: 100_000, participantIds: ['a'] },
+    ]);
+    expect(expense?.fees).toEqual([{ label: 'Discount', amount: -10_000 }]);
+  });
+
+  it('leaves a plain expense without the fields, and drops junk and zero fees', () => {
+    const data = normaliseAppData({
+      trips: [validTrip],
+      expenses: [
+        base,
+        { ...base, id: 'e2', items: [], fees: [{ label: 'Tax', amount: 5 }] },
+        { ...base, id: 'e3', items: [{ name: 'Tea', price: 'abc' }, 'junk'], fees: [{ amount: 0 }] },
+      ],
+    });
+    const [plain, empty, junk] = data?.expenses ?? [];
+    expect(plain).not.toHaveProperty('items');
+    expect(empty).not.toHaveProperty('items');
+    expect(empty).not.toHaveProperty('fees');
+    expect(junk.items).toHaveLength(1);
+    expect(junk.items?.[0]).toMatchObject({ name: 'Tea', price: 0, participantIds: [] });
+    expect(junk).not.toHaveProperty('fees');
+  });
+
+  it('survives a backup round trip', () => {
+    const first = normaliseAppData({
+      trips: [validTrip],
+      expenses: [{ ...base, items: [{ id: 'i1', name: 'Pho', price: 90_000, participantIds: ['a'] }] }],
+    });
+    const again = parseImportedData(JSON.stringify(first));
+    expect(again?.expenses[0].items).toEqual(first?.expenses[0].items);
+  });
+});
