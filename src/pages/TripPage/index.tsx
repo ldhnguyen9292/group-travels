@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import BalanceList from '../../components/BalanceList';
 import ContributionForm from '../../components/ContributionForm';
 import ContributionList from '../../components/ContributionList';
+import DailyTotals from '../../components/DailyTotals';
 import ExpenseForm from '../../components/ExpenseForm';
 import ExpenseList from '../../components/ExpenseList';
 import ExpenseTable from '../../components/ExpenseTable';
@@ -30,6 +31,7 @@ import StatTile from '../../components/ui/StatTile';
 import { btn } from '../../components/ui/classes';
 import { useI18n } from '../../i18n/context';
 import { computeBalances, computeTotals } from '../../lib/balances';
+import { buildDailyOverview, buildDailyTotals, buildDaySummary } from '../../lib/daily';
 import { buildFundEntries } from '../../lib/fundEntries';
 import { formatDateRange } from '../../lib/date';
 import { buildExpenseMatrix } from '../../lib/expenseMatrix';
@@ -49,7 +51,7 @@ import type {
 type ActiveModal = 'trip' | 'contribution' | 'expense' | 'share' | null;
 
 /** The list edits, the table checks. Whichever is open is a per-visit choice. */
-type ExpenseView = 'list' | 'table';
+type ExpenseView = 'list' | 'table' | 'daily';
 
 type PendingDelete = { kind: 'contribution' | 'expense'; id: ID } | null;
 
@@ -99,6 +101,8 @@ export default function TripPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
   const [expenseView, setExpenseView] = useState<ExpenseView>('list');
+  /** Text of the by-day share sheet: one day, or every day. Null while closed. */
+  const [dailyShare, setDailyShare] = useState<string | null>(null);
 
   const totals = useMemo(
     () => (trip ? computeTotals(trip, expenses, contributions) : null),
@@ -119,6 +123,8 @@ export default function TripPage() {
     () => (trip ? buildExpenseMatrix(trip, expenses, dates, { t, locale }) : null),
     [trip, expenses, dates, t, locale],
   );
+
+  const days = useMemo(() => (trip ? buildDailyTotals(trip, expenses) : []), [trip, expenses]);
 
   if (!trip || !totals || !matrix) {
     return (
@@ -309,12 +315,40 @@ export default function TripPage() {
                 <IconTable className="h-4 w-4" />
                 {t.expense.viewTable}
               </Button>
+              <Button
+                variant={expenseView === 'daily' ? 'secondary' : 'ghost'}
+                size="sm"
+                aria-pressed={expenseView === 'daily'}
+                onClick={() => setExpenseView('daily')}
+              >
+                <IconCalendar className="h-4 w-4" />
+                {t.daily.view}
+              </Button>
             </div>
           )
         }
       >
         {expenses.length === 0 ? (
           <EmptyState title={t.expense.empty} compact />
+        ) : expenseView === 'daily' ? (
+          <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="min-w-0 flex-1 text-xs text-ink-muted">{t.daily.hint}</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setDailyShare(buildDailyOverview(trip, days, { t, locale }))}
+              >
+                <IconShare className="h-4 w-4" />
+                {t.daily.shareAll}
+              </Button>
+            </div>
+            <DailyTotals
+              trip={trip}
+              days={days}
+              onShareDay={(day) => setDailyShare(buildDaySummary(trip, day, { t, locale }))}
+            />
+          </>
         ) : expenseView === 'table' ? (
           <>
             <p className="mb-2 text-xs text-ink-muted">
@@ -386,6 +420,13 @@ export default function TripPage() {
             : null
         }
         onClose={closeModal}
+      />
+
+      <ShareDialog
+        open={dailyShare !== null}
+        subject={`${trip.name} – ${t.daily.title}`}
+        text={dailyShare ?? ''}
+        onClose={() => setDailyShare(null)}
       />
 
       <ConfirmDialog
