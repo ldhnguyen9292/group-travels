@@ -66,6 +66,21 @@ const en = {
     deleteTitle: 'Delete this trip?',
     deleteBody: 'The trip, its contributions and its expenses will be removed from this device. This cannot be undone.',
   },
+  homeGuide: {
+    shareApp: 'Tell a friend',
+    sharePitch: 'Split group trip costs without a spreadsheet — no account needed.',
+    linkCopied: 'Link copied — paste it to your friends.',
+    title: 'Get started in 4 steps',
+    steps: [
+      'Create a trip and add the people coming.',
+      'Add money in — what each person puts into the shared fund.',
+      'Add expenses, or scan a receipt to split it item by item.',
+      'See who gets money back and who owes, then share the results with the group.',
+    ],
+    moreHelp: 'More help',
+    show: 'Show the guide',
+    hide: 'Hide the guide',
+  },
   tripForm: {
     createTitle: 'New trip',
     editTitle: 'Edit trip',
@@ -469,6 +484,21 @@ const vn: Dictionary = {
     deleteTitle: 'Xóa chuyến đi này?',
     deleteBody:
       'Chuyến đi cùng toàn bộ tiền ứng trước và chi tiêu sẽ bị xóa khỏi thiết bị này. Không thể hoàn tác.',
+  },
+  homeGuide: {
+    shareApp: 'Giới thiệu cho bạn bè',
+    sharePitch: 'Chia tiền chuyến đi nhóm không cần bảng tính, không cần tài khoản.',
+    linkCopied: 'Đã sao chép link — dán gửi bạn bè nhé.',
+    title: 'Bắt đầu trong 4 bước',
+    steps: [
+      'Tạo chuyến đi và thêm những người tham gia.',
+      'Thêm tiền góp — số tiền mỗi người bỏ vào quỹ chung.',
+      'Thêm khoản chi, hoặc quét hoá đơn để chia theo từng món.',
+      'Xem ai dư ai thiếu, rồi chia sẻ kết quả cho cả nhóm.',
+    ],
+    moreHelp: 'Xem thêm trợ giúp',
+    show: 'Xem hướng dẫn',
+    hide: 'Ẩn hướng dẫn',
   },
   tripForm: {
     createTitle: 'Chuyến đi mới',

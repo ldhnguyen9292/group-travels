@@ -41,6 +41,20 @@ export async function nativeShare(title: string, text: string, files?: File[]): 
   }
 }
 
+/**
+ * Opens the native share sheet with a link. Returns false when there is no
+ * share sheet or the user dismissed it — the caller decides what to do then.
+ */
+export async function shareLink(title: string, text: string, url: string): Promise<boolean> {
+  if (!canNativeShare()) return false;
+  try {
+    await navigator.share({ title, text, url });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Saves a blob to the user's downloads under `filename`. */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
