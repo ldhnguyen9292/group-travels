@@ -346,7 +346,15 @@ const en = {
       },
       {
         q: 'Someone paid with their own cash. What do I do?',
-        a: 'Add the expense, pick them as the payer, and tick "Count this as money the payer put in". The app records both the spending and their payment in one step.',
+        a: 'Add the expense, pick them as the payer, and under "Whose money was it?" choose "The payer’s own". The amount then counts as money they put in, and shows under Money in as "fronted". Deleting the expense removes that line too.',
+      },
+      {
+        q: 'How do I scan a receipt?',
+        a: 'First save a free Gemini API key on the About page. Then open a trip, tap "Scan receipt" and take or choose a photo. Check the items it read, tap who had each one (or "Split the whole bill equally"), pick who paid and save. Scanning needs an internet connection.',
+      },
+      {
+        q: 'How much did we spend each day?',
+        a: 'Open a trip and, in Expenses, switch to "By day". Each day shows its total and each person’s share. Use the share button on a day, or "Share all days", to send it to the group chat.',
       },
       {
         q: 'Where is my data stored?',
@@ -754,7 +762,15 @@ const vn: Dictionary = {
       },
       {
         q: 'Có người trả bằng tiền riêng thì làm sao?',
-        a: 'Thêm khoản chi, chọn người đó là người thanh toán và tích "Tính đây là tiền người thanh toán đã góp". Ứng dụng sẽ ghi cả khoản chi lẫn tiền góp trong một lần.',
+        a: 'Thêm khoản chi, chọn người đó là người thanh toán, và ở mục "Tiền của ai?" chọn "Người thanh toán". Số tiền đó được tính là tiền họ đã góp và hiện trong Tiền góp vào quỹ với chữ "đã ứng". Xoá khoản chi thì dòng này cũng mất theo.',
+      },
+      {
+        q: 'Quét hoá đơn như thế nào?',
+        a: 'Trước tiên lưu Gemini API key miễn phí ở trang Giới thiệu. Sau đó mở chuyến đi, bấm "Quét hoá đơn" rồi chụp hoặc chọn ảnh. Kiểm tra các món đã đọc, bấm chọn ai dùng món nào (hoặc "Chia đều cả bill"), chọn người thanh toán rồi lưu. Cần có mạng để quét.',
+      },
+      {
+        q: 'Mỗi ngày nhóm tiêu bao nhiêu?',
+        a: 'Mở chuyến đi, ở mục Khoản chi chọn "Theo ngày". Mỗi ngày hiện tổng tiền và phần của từng người. Bấm nút chia sẻ ở từng ngày, hoặc "Chia sẻ tất cả các ngày", để gửi vào nhóm chat.',
       },
       {
         q: 'Dữ liệu của tôi được lưu ở đâu?',
